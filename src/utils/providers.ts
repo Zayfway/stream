@@ -31,8 +31,8 @@ export const notifySourcesUpdated = () => {
   Catalogue complet des 14 providers compatibles TMDB.
 */
 export const DEFAULT_SOURCES: Provider[] = [
-  // --- TES SOURCES D'ORIGINE ---
-
+  // --- TES SOURCES D'ORIGINE (colle tes sources ici) ---
+];
 
 export const providers = DEFAULT_SOURCES;
 
