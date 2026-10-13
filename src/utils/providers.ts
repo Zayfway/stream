@@ -31,7 +31,107 @@ export const notifySourcesUpdated = () => {
   Catalogue complet des 14 providers compatibles TMDB.
 */
 export const DEFAULT_SOURCES: Provider[] = [
-  // --- TES SOURCES D'ORIGINE (colle tes sources ici) ---
+  // --- TES SOURCES D'ORIGINE ---
+  {
+    id: 'vidsrc',
+    name: 'Vidsrc.su ⭐',
+    movieUrl: 'https://vidsrc.su/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.su/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Best server'
+  },
+  {
+    id: 'vidfast',
+    name: 'Vidfast',
+    movieUrl: 'https://vidfast.pro/movie/{tmdb_id}',
+    tvUrl: 'https://vidfast.pro/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'videasy',
+    name: 'Videasy',
+    movieUrl: 'https://player.videasy.net/movie/{tmdb_id}',
+    tvUrl: 'https://player.videasy.net/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'embedsu',
+    name: 'Embed.su',
+    movieUrl: 'https://embed.su/embed/movie/{tmdb_id}',
+    tvUrl: 'https://embed.su/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'vidsrcvip',
+    name: 'VidSrc.vip',
+    movieUrl: 'https://vidsrc.vip/embed/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.vip/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'autoembed',
+    name: 'AutoEmbed',
+    movieUrl: 'https://player.autoembed.cc/embed/movie/{tmdb_id}',
+    tvUrl: 'https://player.autoembed.cc/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: '2embed',
+    name: '2Embed',
+    movieUrl: 'https://www.2embed.cc/embed/{tmdb_id}',
+    tvUrl: 'https://www.2embed.cc/embedtv/{tmdb_id}&s={season_number}&e={episode_number}',
+    warning: 'Use Adblocker'
+  },
+
+  // --- NOUVELLES SOURCES AJOUTÉES ---
+  {
+    id: 'vidlink',
+    name: 'VidLink.pro ⚡',
+    movieUrl: 'https://vidlink.pro/movie/{tmdb_id}',
+    tvUrl: 'https://vidlink.pro/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Ultra Fast / Responsive'
+  },
+  {
+    id: 'vixsrc',
+    name: 'VixSrc',
+    movieUrl: 'https://vixsrc.to/movie/{tmdb_id}',
+    tvUrl: 'https://vixsrc.to/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Good quality'
+  },
+  {
+    id: 'vidsrccc',
+    name: 'VidSrc CC',
+    movieUrl: 'https://vidsrc.cc/v2/embed/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.cc/v2/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Multi-streams'
+  },
+  {
+    id: 'vidsrcto',
+    name: 'VidSrc.to',
+    movieUrl: 'https://vidsrc.to/embed/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.to/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'multiembed',
+    name: 'MultiEmbed',
+    movieUrl: 'https://multiembed.mov/?video_id={tmdb_id}&tmdb=1',
+    tvUrl: 'https://multiembed.mov/?video_id={tmdb_id}&tmdb=1&s={season_number}&e={episode_number}',
+    warning: 'Multiple server fallbacks'
+  },
+  {
+    id: 'smashystream',
+    name: 'SmashyStream',
+    movieUrl: 'https://player.smashy.stream/movie/{tmdb_id}',
+    tvUrl: 'https://player.smashy.stream/tv/{tmdb_id}?s={season_number}&e={episode_number}',
+    warning: 'Good backup'
+  },
+  {
+    id: 'moviesapi',
+    name: 'MoviesAPI',
+    movieUrl: 'https://moviesapi.club/movie/{tmdb_id}',
+    tvUrl: 'https://moviesapi.club/tv/{tmdb_id}-{season_number}-{episode_number}',
+    warning: 'Fast loading'
+  }
 ];
 
 export const providers = DEFAULT_SOURCES;
