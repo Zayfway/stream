@@ -1,4 +1,3 @@
-
 export interface Provider {
   id: string;
   name: string;
@@ -12,10 +11,8 @@ export interface Provider {
 /*
   Playback sources (user-managed)
   --------------------------------
-  MeyStream ships with NO bundled source. Each user adds their OWN legal
-  source(s) — a Plex server, a Pluto TV feed, a self-hosted player — from
-  Settings > Sources. Entries are stored in localStorage (this device), with a
-  clean shape ready to sync to a backend later.
+  MeyStream ships with bundled default sources. Each user can also add their OWN
+  source(s) from Settings > Sources. Entries are stored in localStorage (this device).
 
   Playback URLs support the tokens {tmdb_id}, {season_number}, {episode_number},
   substituted at playback time.
@@ -30,23 +27,114 @@ export const notifySourcesUpdated = () => {
 };
 
 /*
-  ►► AJOUTE TES PROVIDERS ICI ◄◄
-  Ces sources sont livrées AVEC le site (visibles par tous ceux qui ouvrent ton
-  URL Render). Chaque utilisateur peut aussi ajouter les siennes depuis
-  Réglages > Sources (stockées sur son appareil), qui se fusionnent par-dessus.
-  Jetons supportés : {tmdb_id}, {season_number}, {episode_number}.
-
-  Exemple :
-    {
-      id: 'plex',
-      name: 'Mon Plex',
-      movieUrl: 'https://mon-hote/player/movie/{tmdb_id}',
-      tvUrl: 'https://mon-hote/player/tv/{tmdb_id}/{season_number}/{episode_number}',
-    },
+  ►► SOURCES PAR DÉFAUT ◄◄
+  Catalogue complet des 14 providers compatibles TMDB.
 */
 export const DEFAULT_SOURCES: Provider[] = [
-  // ← colle tes sources ici
+  // --- TES SOURCES D'ORIGINE ---
+  {
+    id: 'vidsrc',
+    name: 'Vidsrc.su ⭐',
+    movieUrl: 'https://vidsrc.su/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.su/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Best server'
+  },
+  {
+    id: 'vidfast',
+    name: 'Vidfast',
+    movieUrl: 'https://vidfast.pro/movie/{tmdb_id}',
+    tvUrl: 'https://vidfast.pro/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'videasy',
+    name: 'Videasy',
+    movieUrl: 'https://player.videasy.net/movie/{tmdb_id}',
+    tvUrl: 'https://player.videasy.net/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'embedsu',
+    name: 'Embed.su',
+    movieUrl: 'https://embed.su/embed/movie/{tmdb_id}',
+    tvUrl: 'https://embed.su/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'vidsrcvip',
+    name: 'VidSrc.vip',
+    movieUrl: 'https://vidsrc.vip/embed/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.vip/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'autoembed',
+    name: 'AutoEmbed',
+    movieUrl: 'https://player.autoembed.cc/embed/movie/{tmdb_id}',
+    tvUrl: 'https://player.autoembed.cc/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: '2embed',
+    name: '2Embed',
+    movieUrl: 'https://www.2embed.cc/embed/{tmdb_id}',
+    tvUrl: 'https://www.2embed.cc/embedtv/{tmdb_id}&s={season_number}&e={episode_number}',
+    warning: 'Use Adblocker'
+  },
+
+  // --- NOUVELLES SOURCES AJOUTÉES ---
+  {
+    id: 'vidlink',
+    name: 'VidLink.pro ⚡',
+    movieUrl: 'https://vidlink.pro/movie/{tmdb_id}',
+    tvUrl: 'https://vidlink.pro/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Ultra Fast / Responsive'
+  },
+  {
+    id: 'vixsrc',
+    name: 'VixSrc',
+    movieUrl: 'https://vixsrc.to/movie/{tmdb_id}',
+    tvUrl: 'https://vixsrc.to/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Good quality'
+  },
+  {
+    id: 'vidsrccc',
+    name: 'VidSrc CC',
+    movieUrl: 'https://vidsrc.cc/v2/embed/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.cc/v2/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Multi-streams'
+  },
+  {
+    id: 'vidsrcto',
+    name: 'VidSrc.to',
+    movieUrl: 'https://vidsrc.to/embed/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.to/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Use Adblocker'
+  },
+  {
+    id: 'multiembed',
+    name: 'MultiEmbed',
+    movieUrl: 'https://multiembed.mov/?video_id={tmdb_id}&tmdb=1',
+    tvUrl: 'https://multiembed.mov/?video_id={tmdb_id}&tmdb=1&s={season_number}&e={episode_number}',
+    warning: 'Multiple server fallbacks'
+  },
+  {
+    id: 'smashystream',
+    name: 'SmashyStream',
+    movieUrl: 'https://player.smashy.stream/movie/{tmdb_id}',
+    tvUrl: 'https://player.smashy.stream/tv/{tmdb_id}?s={season_number}&e={episode_number}',
+    warning: 'Good backup'
+  },
+  {
+    id: 'moviesapi',
+    name: 'MoviesAPI',
+    movieUrl: 'https://moviesapi.club/movie/{tmdb_id}',
+    tvUrl: 'https://moviesapi.club/tv/{tmdb_id}-{season_number}-{episode_number}',
+    warning: 'Fast loading'
+  }
 ];
+
+export const providers = DEFAULT_SOURCES;
 
 export const getSources = (): Provider[] => {
   let stored: Provider[] = [];
@@ -85,12 +173,11 @@ export const removeSource = (id: string): void => {
 
 export const hasProviders = (): boolean => getSources().length > 0;
 
-// Favorite / default source management
 export const getFavoriteProviderId = (): string => {
   try {
-    return localStorage.getItem(DEFAULT_SOURCE_KEY) || getSources()[0]?.id || '';
+    return localStorage.getItem(DEFAULT_SOURCE_KEY) || getSources()[0]?.id || 'vidsrc';
   } catch {
-    return getSources()[0]?.id || '';
+    return getSources()[0]?.id || 'vidsrc';
   }
 };
 
@@ -103,7 +190,6 @@ export const setFavoriteProvider = (providerId: string): void => {
   }
 };
 
-/** Returns the preferred source, or null when none are configured. */
 export const getDefaultProvider = (): Provider | null => {
   const list = getSources();
   if (list.length === 0) return null;
