@@ -32,6 +32,13 @@ export const notifySourcesUpdated = () => {
 */
 export const DEFAULT_SOURCES: Provider[] = [
   // --- TES SOURCES D'ORIGINE ---
+    {
+    id: 'plex',
+    name: 'Mon Plex Personnel (Local) 🍿',
+    movieUrl: 'https://app.plex.tv/desktop/#!/provider/tv.plex.provider.discover/details?key=%2Flibrary%2Fmetadata%2F{tmdb_id}',
+    tvUrl: 'https://app.plex.tv/desktop/#!/provider/tv.plex.provider.discover/details?key=%2Flibrary%2Fmetadata%2F{tmdb_id}',
+    warning: 'Serveur personnel légal'
+  },
 
 export const providers = DEFAULT_SOURCES;
 
