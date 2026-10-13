@@ -1,241 +1,296 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MediaDetails, getMediaDetails, getImageUrl, getRecommendations, Media } from '@/utils/api';
+import {
+  MediaDetails,
+  getMediaDetails,
+  getRecommendations,
+  getCredits,
+  getVideos,
+  getTitleWatchProviders,
+  getImageUrl,
+  getProviderLogoUrl,
+  CastMember,
+  Video,
+  WatchProvider,
+  Media,
+} from '@/utils/api';
+import { getWatchRegion } from '@/utils/watchProviders';
+import { recordView } from '@/lib/history';
 import Navbar from '@/components/Navbar';
-import MediaGrid from '@/components/MediaGrid';
-import { Button } from '@/components/ui/button';
-import { Play, Calendar, Clock, Star } from 'lucide-react';
-import Loader from '@/components/Loader';
+import PageBackdrop from '@/components/PageBackdrop';
+import MediaRail from '@/components/MediaRail';
 import WatchlistButton from '@/components/WatchlistButton';
+import Loader from '@/components/Loader';
+import { Play, Star, X } from 'lucide-react';
+
+const money = (n?: number) =>
+  n && n > 0 ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n) : '—';
 
 const Details: React.FC = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
-  const [details, setDetails] = useState<MediaDetails | null>(null);
-  const [recommendations, setRecommendations] = useState<Media[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const mt = (type as 'movie' | 'tv') || 'movie';
+
+  const [details, setDetails] = useState<MediaDetails | null>(null);
+  const [cast, setCast] = useState<CastMember[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [providers, setProviders] = useState<WatchProvider[]>([]);
+  const [recs, setRecs] = useState<Media[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [trailer, setTrailer] = useState<Video | null>(null);
 
   useEffect(() => {
     if (!type || !id) return;
-    
-    const fetchDetails = async () => {
-      setLoading(true);
-      try {
-        const [detailsData, recommendationsData] = await Promise.all([
-          getMediaDetails(id, type as 'movie' | 'tv'),
-          getRecommendations(id, type as 'movie' | 'tv')
-        ]);
-        
-        setDetails(detailsData);
-        setRecommendations(recommendationsData.results.slice(0, 12));
-      } catch (error) {
-        console.error('Error fetching details:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    let cancelled = false;
+    setLoading(true);
     window.scrollTo(0, 0);
-    fetchDetails();
-  }, [type, id]);
 
-  const handleWatch = () => {
-    if (type && id) {
-      navigate(`/watch/${type}/${id}`);
-    }
-  };
+    Promise.all([
+      getMediaDetails(id, mt),
+      getRecommendations(id, mt).catch(() => null),
+      getCredits(id, mt).catch(() => null),
+      getVideos(id, mt).catch(() => null),
+      getTitleWatchProviders(id, mt).catch(() => null),
+    ]).then(([d, r, c, v, wp]) => {
+      if (cancelled) return;
+      setDetails(d);
+      setCast(c?.cast?.slice(0, 16) || []);
+      setVideos(
+        (v?.results || []).filter((x) => x.site === 'YouTube' && ['Trailer', 'Teaser'].includes(x.type))
+      );
+      const region = getWatchRegion();
+      setProviders(wp?.results?.[region]?.flatrate || []);
+      setRecs((r?.results || []).map((m) => ({ ...m, media_type: mt })).slice(0, 18));
+      // Continue Watching
+      recordView({
+        id: d.id,
+        title: d.title,
+        name: d.name,
+        poster_path: d.poster_path,
+        backdrop_path: d.backdrop_path,
+        overview: d.overview,
+        vote_average: d.vote_average,
+        release_date: d.release_date,
+        first_air_date: d.first_air_date,
+        media_type: mt,
+        genre_ids: d.genres?.map((g) => g.id) || [],
+      });
+    }).finally(() => !cancelled && setLoading(false));
+
+    return () => { cancelled = true; };
+  }, [type, id, mt]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 flex justify-center items-center h-[70vh]">
-          <Loader size="large" />
-        </div>
+        <div className="pt-24 flex justify-center items-center h-[70vh]"><Loader size="large" /></div>
       </div>
     );
   }
-
   if (!details) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-16 max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-2xl font-bold">Details not found</h1>
-          <Button 
-            onClick={() => navigate('/')}
-            className="mt-4"
-          >
-            Go Home
-          </Button>
+        <div className="pt-28 text-center">
+          <h1 className="text-2xl font-bold text-white">Introuvable</h1>
         </div>
       </div>
     );
   }
 
-  const backdropUrl = getImageUrl(details.backdrop_path, 'original');
-  const posterUrl = getImageUrl(details.poster_path, 'w500');
+  const backdrop = getImageUrl(details.backdrop_path, 'original');
   const title = details.title || details.name || '';
-  const year = details.release_date || details.first_air_date 
-    ? new Date(details.release_date || details.first_air_date || '').getFullYear() 
-    : '';
-  
-  const runtime = details.runtime 
-    ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60}m` 
-    : details.episode_run_time && details.episode_run_time.length > 0 
-      ? `${Math.floor(details.episode_run_time[0] / 60)}h ${details.episode_run_time[0] % 60}m` 
-      : 'N/A';
-  
-  const rating = details.vote_average ? Math.round(details.vote_average * 10) : 'N/A';
-  
-  // Create a Media object from the details for the watchlist
-  const mediaForWatchlist: Media = {
-    id: details.id,
-    title: details.title || '',
-    name: details.name || '',
-    poster_path: details.poster_path,
-    backdrop_path: details.backdrop_path,
-    release_date: details.release_date || '',
-    first_air_date: details.first_air_date || '',
-    vote_average: details.vote_average,
-    media_type: type as 'movie' | 'tv',
-    overview: details.overview,
-    genre_ids: details.genres.map(genre => genre.id)
+  const year = (details.release_date || details.first_air_date || '').slice(0, 4);
+  const runtime = details.runtime
+    ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60}m`
+    : details.episode_run_time?.[0]
+    ? `${details.episode_run_time[0]}m`
+    : details.number_of_seasons
+    ? `${details.number_of_seasons} saison${details.number_of_seasons > 1 ? 's' : ''}`
+    : '—';
+
+  const mediaForList: Media = {
+    id: details.id, title: details.title || '', name: details.name || '',
+    poster_path: details.poster_path, backdrop_path: details.backdrop_path,
+    release_date: details.release_date || '', first_air_date: details.first_air_date || '',
+    vote_average: details.vote_average, media_type: mt, overview: details.overview,
+    genre_ids: details.genres.map((g) => g.id),
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      {/* Backdrop */}
-      <div className="relative w-full h-[70vh] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/80 to-background z-10"></div>
-        {backdropUrl && (
-          <img
-            src={backdropUrl}
-            alt={title}
-            className="w-full h-full object-cover object-center animate-blur-in"
-          />
-        )}
-      </div>
-      
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-72 relative z-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-          {/* Poster */}
-          <div className="hidden md:block">
-            <div className="rounded-lg overflow-hidden poster-shadow animate-fade-in">
-              {posterUrl ? (
-                <img 
-                  src={posterUrl} 
-                  alt={title} 
-                  className="w-full object-cover"
-                />
-              ) : (
-                <div className="bg-halo-200 aspect-[2/3] flex items-center justify-center">
-                  <span className="text-halo-500">No image available</span>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Details */}
-          <div className="md:col-span-2 text-white md:text-left text-center animate-slide-up">
-            <h1 className="text-3xl md:text-5xl font-bold text-shadow-lg mb-2">
-              {title}
-            </h1>
-            
-            {details.tagline && (
-              <p className="text-lg italic text-white/80 mb-4">{details.tagline}</p>
-            )}
-            
-            {/* Mobile Poster (shows only on mobile) */}
-            <div className="md:hidden mx-auto max-w-[250px] mb-6">
-              <div className="rounded-lg overflow-hidden poster-shadow">
-                {posterUrl ? (
-                  <img 
-                    src={posterUrl} 
-                    alt={title} 
-                    className="w-full object-cover"
-                  />
-                ) : (
-                  <div className="bg-halo-200 aspect-[2/3] flex items-center justify-center">
-                    <span className="text-halo-500">No image available</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Metadata */}
-            <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 mb-6">
-              {year && (
-                <div className="flex items-center text-white/80">
-                  <Calendar size={16} className="mr-1" />
-                  <span>{year}</span>
-                </div>
-              )}
-              
-              <div className="flex items-center text-white/80">
-                <Clock size={16} className="mr-1" />
-                <span>{runtime}</span>
-              </div>
-              
-              <div className="flex items-center text-white/80">
-                <Star size={16} className="mr-1 text-yellow-400" />
-                <span>{rating}%</span>
-              </div>
-            </div>
-            
-            {/* Genres */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6">
-              {details.genres.map(genre => (
-                <span 
-                  key={genre.id} 
-                  className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-sm"
-                >
-                  {genre.name}
-                </span>
-              ))}
-            </div>
-            
-            {/* Overview */}
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold mb-2">Overview</h3>
-              <p className="text-white/80 leading-relaxed">
-                {details.overview || 'No overview available.'}
-              </p>
-            </div>
-            
-            {/* Action buttons */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-4">
-              <Button 
-                onClick={handleWatch} 
-                size="lg" 
-                className="rounded-full bg-white text-black hover:bg-white/90 transition-all px-8"
-              >
-                <Play size={18} className="mr-2" /> Watch Now
-              </Button>
-              
-              <WatchlistButton 
-                media={mediaForWatchlist} 
-                variant="button" 
-                size={18}
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <PageBackdrop url={backdrop} />
+
+      <div className="relative z-10">
+        <Navbar />
+
+        {/* Backdrop (sharp) — image + gradient masked as ONE block so the bottom
+            dissolves into the fixed page backdrop with no seam. */}
+        <div className="relative w-full h-[62vh] min-h-[420px]">
+          <div
+            className="absolute inset-0"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, #000 44%, transparent 98%)',
+              maskImage: 'linear-gradient(to bottom, #000 44%, transparent 98%)',
+            }}
+          >
+            {backdrop && (
+              <img
+                src={backdrop}
+                alt={title}
+                className="w-full h-full object-cover object-center animate-blur-in"
               />
-            </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/20 to-transparent" />
           </div>
         </div>
-        
-        {/* Recommendations */}
-        {recommendations.length > 0 && (
-          <div className="mt-16 pb-16">
-            <MediaGrid 
-              title="You May Also Like" 
-              medias={recommendations} 
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 -mt-56 sm:-mt-64 relative">
+          <div className="grid lg:grid-cols-[1fr_300px] gap-8 lg:gap-12">
+            {/* Main */}
+            <div className="text-left">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white text-shadow-lg">{title}</h1>
+
+              {details.genres.length > 0 && (
+                <p className="mt-3 text-white/70 font-medium">
+                  {details.genres.map((g) => g.name).join(' · ')}
+                </p>
+              )}
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <button onClick={() => navigate(`/watch/${mt}/${id}`)}
+                  className="flex items-center gap-2 rounded-full bg-white px-7 py-3 font-bold text-black transition hover:bg-white/90">
+                  <Play size={20} className="fill-black" /> Play
+                </button>
+                <WatchlistButton media={mediaForList} variant="button" size={18} />
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/80">
+                {year && <span>{year}</span>}
+                <span>{runtime}</span>
+                {details.vote_average > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Star size={15} className="fill-yellow-400 text-yellow-400" />
+                    {Math.round(details.vote_average * 10) / 10}
+                  </span>
+                )}
+                <span className="uppercase text-xs px-2 py-0.5 rounded-full border border-white/20 bg-white/10">
+                  {mt === 'tv' ? 'Série' : 'Film'}
+                </span>
+              </div>
+
+              {details.tagline && <p className="mt-5 italic text-white/60">{details.tagline}</p>}
+
+              <p className="mt-4 max-w-2xl text-white/85 leading-relaxed">
+                {details.overview || 'Aucun synopsis disponible.'}
+              </p>
+
+              {/* Where to watch */}
+              {providers.length > 0 && (
+                <div className="mt-6">
+                  <p className="text-sm font-semibold text-white mb-2">Où regarder</p>
+                  <div className="flex flex-wrap gap-2.5">
+                    {providers.map((p) => (
+                      <div key={p.provider_id} className="h-11 w-11 rounded-xl overflow-hidden border border-white/10 bg-white/5" title={p.provider_name}>
+                        <img src={getProviderLogoUrl(p.logo_path, 'w92')} alt={p.provider_name} className="h-full w-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">Dispo via JustWatch · région {getWatchRegion()}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Info sidebar */}
+            <aside className="lg:pt-4">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 space-y-3 text-left">
+                {[
+                  ['Durée', runtime],
+                  ['Langue', details.original_language?.toUpperCase() || '—'],
+                  ['Sortie', details.release_date || details.first_air_date || '—'],
+                  mt === 'movie' ? ['Budget', money(details.budget)] : ['Saisons', String(details.number_of_seasons ?? '—')],
+                  mt === 'movie' ? ['Recettes', money(details.revenue)] : ['Épisodes', String(details.number_of_episodes ?? '—')],
+                  ['Statut', details.status || '—'],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex items-center justify-between gap-4 text-sm border-b border-white/5 pb-2.5 last:border-0 last:pb-0">
+                    <span className="text-muted-foreground">{k}</span>
+                    <span className="text-white font-medium text-right">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
+
+          {/* Cast */}
+          {cast.length > 0 && (
+            <section className="mt-12 text-left">
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Casting</h2>
+              <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+                {cast.map((c) => (
+                  <div key={c.id} className="shrink-0 w-[92px] text-center">
+                    <div className="h-[92px] w-[92px] rounded-full overflow-hidden border border-white/10 bg-card mx-auto">
+                      {c.profile_path ? (
+                        <img src={getImageUrl(c.profile_path, 'w185')!} alt={c.name} className="h-full w-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-white/40 text-2xl font-semibold">{c.name.charAt(0)}</div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs font-medium text-white truncate">{c.name}</p>
+                    {c.character && <p className="text-[11px] text-muted-foreground truncate">{c.character}</p>}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Trailers */}
+          {videos.length > 0 && (
+            <section className="mt-10 text-left">
+              <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Bandes-annonces</h2>
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+                {videos.map((v) => (
+                  <button key={v.id} onClick={() => setTrailer(v)}
+                    className="group shrink-0 w-[260px] text-left">
+                    <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10">
+                      <img src={`https://img.youtube.com/vi/${v.key}/hqdefault.jpg`} alt={v.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-black"><Play size={20} className="fill-black ml-0.5" /></span>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-white/80 truncate">{v.name}</p>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Recommendations */}
+          {recs.length > 0 && (
+            <div className="mt-6 pb-16">
+              <MediaRail title="Dans le même genre" medias={recs} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Trailer lightbox */}
+      {trailer && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setTrailer(null)}>
+          <div className="relative w-full max-w-4xl aspect-video" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setTrailer(null)} className="absolute -top-11 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20" aria-label="Fermer">
+              <X size={18} />
+            </button>
+            <iframe
+              className="w-full h-full rounded-xl"
+              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1`}
+              title={trailer.name}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

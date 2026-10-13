@@ -9,68 +9,104 @@ export interface Provider {
   isHLSPlayer?: boolean;
 }
 
-// Add function to manage favorite provider
+/*
+  Playback sources (user-managed)
+  --------------------------------
+  MeyStream ships with NO bundled source. Each user adds their OWN legal
+  source(s) — a Plex server, a Pluto TV feed, a self-hosted player — from
+  Settings > Sources. Entries are stored in localStorage (this device), with a
+  clean shape ready to sync to a backend later.
+
+  Playback URLs support the tokens {tmdb_id}, {season_number}, {episode_number},
+  substituted at playback time.
+*/
+
+export const SOURCES_KEY = 'meystream-sources';
+export const DEFAULT_SOURCE_KEY = 'favoriteProvider';
+export const SOURCES_UPDATED_EVENT = 'meystream-sources-updated';
+
+export const notifySourcesUpdated = () => {
+  window.dispatchEvent(new Event(SOURCES_UPDATED_EVENT));
+};
+
+/*
+  ►► AJOUTE TES PROVIDERS ICI ◄◄
+  Ces sources sont livrées AVEC le site (visibles par tous ceux qui ouvrent ton
+  URL Render). Chaque utilisateur peut aussi ajouter les siennes depuis
+  Réglages > Sources (stockées sur son appareil), qui se fusionnent par-dessus.
+  Jetons supportés : {tmdb_id}, {season_number}, {episode_number}.
+
+  Exemple :
+    {
+      id: 'plex',
+      name: 'Mon Plex',
+      movieUrl: 'https://mon-hote/player/movie/{tmdb_id}',
+      tvUrl: 'https://mon-hote/player/tv/{tmdb_id}/{season_number}/{episode_number}',
+    },
+*/
+export const DEFAULT_SOURCES: Provider[] = [
+  // ← colle tes sources ici
+];
+
+export const getSources = (): Provider[] => {
+  let stored: Provider[] = [];
+  try {
+    const raw = localStorage.getItem(SOURCES_KEY);
+    stored = raw ? (JSON.parse(raw) as Provider[]) : [];
+  } catch {
+    stored = [];
+  }
+  const storedIds = new Set(stored.map((s) => s.id));
+  return [...DEFAULT_SOURCES.filter((s) => !storedIds.has(s.id)), ...stored];
+};
+
+export const saveSources = (list: Provider[]): void => {
+  try {
+    localStorage.setItem(SOURCES_KEY, JSON.stringify(list));
+    notifySourcesUpdated();
+  } catch {
+    /* ignore */
+  }
+};
+
+export const addSource = (s: Provider): void => {
+  const list = getSources();
+  saveSources([...list.filter((x) => x.id !== s.id), s]);
+};
+
+export const updateSource = (s: Provider): void => {
+  const list = getSources().map((x) => (x.id === s.id ? s : x));
+  saveSources(list);
+};
+
+export const removeSource = (id: string): void => {
+  saveSources(getSources().filter((x) => x.id !== id));
+};
+
+export const hasProviders = (): boolean => getSources().length > 0;
+
+// Favorite / default source management
 export const getFavoriteProviderId = (): string => {
-  return localStorage.getItem('favoriteProvider') || 'vidsrc';
+  try {
+    return localStorage.getItem(DEFAULT_SOURCE_KEY) || getSources()[0]?.id || '';
+  } catch {
+    return getSources()[0]?.id || '';
+  }
 };
 
 export const setFavoriteProvider = (providerId: string): void => {
-  localStorage.setItem('favoriteProvider', providerId);
-};
-
-export const getDefaultProvider = (): Provider => {
-  const favoriteId = getFavoriteProviderId();
-  return providers.find(p => p.id === favoriteId) || providers[0];
-};
-
-export const providers: Provider[] = [
-  {
-    id: 'vidsrc',
-    name: 'Vidsrc.su ⭐',
-    movieUrl: 'https://vidsrc.su/movie/{tmdb_id}',
-    tvUrl: 'https://vidsrc.su/tv/{tmdb_id}/{season_number}/{episode_number}',
-    warning: 'Best server'
-  },
-  {
-    id: 'vidfast', 
-    name: 'Vidfast',
-    movieUrl: 'https://vidfast.pro/movie/{tmdb_id}',
-    tvUrl: 'https://vidfast.pro/tv/{tmdb_id}/{season_number}/{episode_number}',
-    warning: 'Use Adblocker'
-  },
-  {
-    id: 'videasy',
-    name: 'Videasy',
-    movieUrl: 'https://player.videasy.net/movie/{tmdb_id}',
-    tvUrl: 'https://player.videasy.net/tv/{tmdb_id}/{season_number}/{episode_number}',
-    warning: 'Use Adblocker'
-  },
-  {
-    id: 'embedsu',
-    name: 'Embed.su',
-    movieUrl: 'https://embed.su/embed/movie/{tmdb_id}',
-    tvUrl: 'https://embed.su/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
-    warning: 'Use Adblocker'
-  },
-  {
-    id: 'vidsrcvip',
-    name: 'VidSrc.vip',
-    movieUrl: 'https://vidsrc.vip/embed/movie/{tmdb_id}',
-    tvUrl: 'https://vidsrc.vip/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
-    warning: 'Use Adblocker'
-  },
-  {
-    id: 'autoembed',
-    name: 'AutoEmbed',
-    movieUrl: 'https://player.autoembed.cc/embed/movie/{tmdb_id}',
-    tvUrl: 'https://player.autoembed.cc/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
-    warning: 'Use Adblocker'
-  },
-  {
-    id: '2embed',
-    name: '2Embed',
-    movieUrl: 'https://www.2embed.cc/embed/{tmdb_id}',
-    tvUrl: 'https://www.2embed.cc/embedtv/{tmdb_id}&s={season_number}&e={episode_number}',
-    warning: 'Use Adblocker'
+  try {
+    localStorage.setItem(DEFAULT_SOURCE_KEY, providerId);
+    notifySourcesUpdated();
+  } catch {
+    /* ignore */
   }
-];
+};
+
+/** Returns the preferred source, or null when none are configured. */
+export const getDefaultProvider = (): Provider | null => {
+  const list = getSources();
+  if (list.length === 0) return null;
+  const favoriteId = getFavoriteProviderId();
+  return list.find((p) => p.id === favoriteId) || list[0];
+};

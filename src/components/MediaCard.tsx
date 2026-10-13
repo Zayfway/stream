@@ -40,10 +40,10 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, index = 0 }) => {
       onClick={handleClick}
     >
       <div className="overflow-hidden rounded-lg poster-shadow transition-transform duration-300 transform group-hover:scale-[1.02]">
-        <div className="relative aspect-[2/3] bg-halo-800 overflow-hidden">
+        <div className="relative aspect-[2/3] bg-white/5 overflow-hidden">
           {posterUrl ? (
             <>
-              <div className={`absolute inset-0 bg-halo-800 ${imageLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} />
+              <div className={`absolute inset-0 bg-white/5 ${imageLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} />
               <img
                 src={posterUrl}
                 alt={title}
@@ -52,7 +52,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, index = 0 }) => {
               />
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-halo-800 text-white/50">
+            <div className="w-full h-full flex items-center justify-center bg-white/5 text-white/50">
               <span className="text-sm">No Image</span>
             </div>
           )}

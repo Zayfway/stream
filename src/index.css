@@ -3,37 +3,197 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  MeyStream theme engine (refined / premium)
+  ------------------------------------------
+  Near-neutral cinematic bases (background saturation 8-18%, lightness 4-6%)
+  so the hue is felt, not seen. One confident accent delivered as a TIGHT
+  analogous --brand -> --brand-2 gradient (saturation pulled into the 55-75%
+  band). Color is spent sparingly: the Play/active pill, focus rings, the hero
+  glow and the slow aurora. Everything else is white at calibrated opacity.
+  Active theme is set via [data-theme] on <html> by ThemeProvider.
+*/
+
 @layer base {
-  :root {
-    --background: 240 10% 3.9%;
+  :root,
+  :root[data-theme="sunset"] {
+    --background: 345 13% 5%;
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 3.9%;
+    --card: 345 12% 8%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 3.9%;
+    --popover: 345 13% 7%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary-foreground: 345 14% 8%;
 
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 345 9% 14%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 345 9% 14%;
+    --muted-foreground: 345 10% 66%;
 
-    --accent: 240 3.7% 15.9%;
+    --accent: 345 10% 16%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 52%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 345 10% 15%;
+    --input: 345 10% 15%;
+    --ring: 348 62% 60%;
 
-    --radius: 0.75rem;
+    --brand: 348 62% 60%;
+    --brand-2: 20 72% 58%;
+    --brand-foreground: 0 0% 100%;
+
+    --radius: 1rem;
+  }
+
+  :root[data-theme="flamingo"] {
+    --background: 336 15% 5%;
+    --card: 336 13% 8%;
+    --popover: 336 14% 7%;
+    --primary-foreground: 336 14% 8%;
+    --secondary: 336 10% 14%;
+    --muted: 336 10% 14%;
+    --muted-foreground: 336 11% 67%;
+    --accent: 336 11% 16%;
+    --border: 336 11% 15%;
+    --input: 336 11% 15%;
+    --ring: 338 68% 62%;
+    --brand: 338 68% 62%;
+    --brand-2: 352 64% 62%;
+  }
+
+  :root[data-theme="ember"] {
+    --background: 14 17% 5%;
+    --card: 14 14% 8%;
+    --popover: 14 15% 7%;
+    --primary-foreground: 14 15% 8%;
+    --secondary: 14 11% 14%;
+    --muted: 14 11% 14%;
+    --muted-foreground: 18 12% 66%;
+    --accent: 14 12% 16%;
+    --border: 14 12% 15%;
+    --input: 14 12% 15%;
+    --ring: 20 74% 56%;
+    --brand: 20 74% 56%;
+    --brand-2: 4 66% 55%;
+  }
+
+  :root[data-theme="peach"] {
+    --background: 17 13% 5%;
+    --card: 17 11% 8%;
+    --popover: 17 12% 7%;
+    --primary-foreground: 17 12% 8%;
+    --secondary: 17 9% 14%;
+    --muted: 17 9% 14%;
+    --muted-foreground: 20 10% 67%;
+    --accent: 17 10% 16%;
+    --border: 17 10% 15%;
+    --input: 17 10% 15%;
+    --ring: 20 70% 64%;
+    --brand: 20 70% 64%;
+    --brand-2: 344 54% 66%;
+  }
+
+  :root[data-theme="aurora"] {
+    --background: 160 15% 5%;
+    --card: 160 13% 8%;
+    --popover: 160 14% 7%;
+    --primary-foreground: 160 14% 8%;
+    --secondary: 160 10% 14%;
+    --muted: 160 10% 14%;
+    --muted-foreground: 158 11% 66%;
+    --accent: 160 11% 16%;
+    --border: 160 11% 15%;
+    --input: 160 11% 15%;
+    --ring: 158 56% 48%;
+    --brand: 158 56% 48%;
+    --brand-2: 172 54% 46%;
+  }
+
+  :root[data-theme="ocean"] {
+    --background: 210 18% 5%;
+    --card: 210 15% 8%;
+    --popover: 210 16% 7%;
+    --primary-foreground: 210 16% 8%;
+    --secondary: 210 12% 14%;
+    --muted: 210 12% 14%;
+    --muted-foreground: 206 13% 67%;
+    --accent: 210 13% 16%;
+    --border: 210 13% 15%;
+    --input: 210 13% 15%;
+    --ring: 206 68% 56%;
+    --brand: 206 68% 56%;
+    --brand-2: 190 60% 50%;
+  }
+
+  :root[data-theme="grape"] {
+    --background: 268 17% 6%;
+    --card: 268 14% 9%;
+    --popover: 268 15% 8%;
+    --primary-foreground: 268 15% 9%;
+    --secondary: 268 11% 15%;
+    --muted: 268 11% 15%;
+    --muted-foreground: 268 12% 68%;
+    --accent: 268 12% 17%;
+    --border: 268 12% 16%;
+    --input: 268 12% 16%;
+    --ring: 266 58% 64%;
+    --brand: 266 58% 64%;
+    --brand-2: 292 50% 62%;
+  }
+
+  :root[data-theme="rosegold"] {
+    --background: 340 11% 5%;
+    --card: 340 10% 8%;
+    --popover: 340 10% 7%;
+    --primary-foreground: 340 11% 8%;
+    --secondary: 340 8% 14%;
+    --muted: 340 8% 14%;
+    --muted-foreground: 340 9% 68%;
+    --accent: 340 9% 16%;
+    --border: 340 9% 15%;
+    --input: 340 9% 15%;
+    --ring: 344 54% 66%;
+    --brand: 344 54% 66%;
+    --brand-2: 36 60% 60%;
+  }
+
+  :root[data-theme="midnight"] {
+    --background: 224 18% 5%;
+    --card: 224 15% 8%;
+    --popover: 224 16% 7%;
+    --primary-foreground: 224 16% 8%;
+    --secondary: 224 12% 14%;
+    --muted: 224 12% 14%;
+    --muted-foreground: 224 13% 68%;
+    --accent: 224 13% 16%;
+    --border: 224 13% 15%;
+    --input: 224 13% 15%;
+    --ring: 224 62% 64%;
+    --brand: 224 62% 64%;
+    --brand-2: 250 54% 66%;
+  }
+
+  :root[data-theme="mono"] {
+    --background: 240 7% 4%;
+    --card: 240 6% 8%;
+    --popover: 240 7% 6%;
+    --primary-foreground: 240 6% 9%;
+    --secondary: 240 5% 14%;
+    --muted: 240 5% 14%;
+    --muted-foreground: 240 5% 66%;
+    --accent: 240 5% 16%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 0 0% 82%;
+    --brand: 0 0% 82%;
+    --brand-2: 0 0% 56%;
   }
 
   * {
@@ -42,7 +202,9 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+    font-family: "Inter Variable", ui-sans-serif, system-ui, -apple-system,
+      "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: "cv11", "ss01";
   }
 
   html {
@@ -55,7 +217,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -63,38 +225,89 @@
   .text-shadow {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-  
+
   .text-shadow-lg {
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   }
 
   .glass {
     @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg;
   }
-  
+
   .glass-dark {
     @apply bg-black/40 backdrop-blur-xl border border-white/5 shadow-lg;
   }
 
-  .animate-delay-100 {
-    animation-delay: 100ms;
+  /* ---- MeyStream brand helpers ---- */
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, hsl(var(--brand)), hsl(var(--brand-2)));
   }
-  
-  .animate-delay-200 {
-    animation-delay: 200ms;
+
+  .text-brand-gradient {
+    background-image: linear-gradient(135deg, hsl(var(--brand)), hsl(var(--brand-2)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
   }
-  
-  .animate-delay-300 {
-    animation-delay: 300ms;
+
+  .brand-glow {
+    box-shadow: 0 10px 40px -12px hsl(var(--brand) / 0.45);
   }
-  
-  .animate-delay-400 {
-    animation-delay: 400ms;
+
+  .brand-ring {
+    box-shadow: 0 0 0 2px hsl(var(--brand) / 0.9), 0 0 0 5px hsl(var(--brand) / 0.22);
   }
-  
-  .animate-delay-500 {
-    animation-delay: 500ms;
+
+  /* ---- Aurora / silk backdrop (northern-lights behind frosted glass) ---- */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
   }
+
+  .aurora span {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.38;
+    will-change: transform;
+  }
+
+  .aurora .a1 {
+    width: 60vmax;
+    height: 60vmax;
+    left: -12vmax;
+    top: -10vmax;
+    background: radial-gradient(circle, hsl(var(--brand)) 0%, transparent 70%);
+    animation: meyAuroraA 42s ease-in-out infinite;
+  }
+
+  .aurora .a2 {
+    width: 55vmax;
+    height: 55vmax;
+    right: -14vmax;
+    top: 6vmax;
+    background: radial-gradient(circle, hsl(var(--brand-2)) 0%, transparent 70%);
+    animation: meyAuroraB 50s ease-in-out infinite;
+  }
+
+  .aurora .a3 {
+    width: 48vmax;
+    height: 48vmax;
+    left: 22vmax;
+    bottom: -18vmax;
+    background: radial-gradient(circle, hsl(var(--brand) / 0.8) 0%, transparent 70%);
+    animation: meyAuroraC 38s ease-in-out infinite;
+  }
+
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
 }
 
 #root {
@@ -122,22 +335,37 @@
   transition: all 0.3s ease;
 }
 
-.page-transition-enter {
-  opacity: 0;
-  transform: translate3d(0, 15px, 0);
+/* ---- Hero carousel progress fill ---- */
+@keyframes meyHeroFill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
-.page-transition-enter-active {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-  transition: opacity 300ms, transform 300ms;
+.hero-fill {
+  transform-origin: left center;
+  animation: meyHeroFill var(--hero-dur, 8s) linear forwards;
 }
 
-.page-transition-exit {
-  opacity: 1;
+/* ---- Aurora drift ---- */
+@keyframes meyAuroraA {
+  0% { transform: translate3d(-8%, -6%, 0) scale(1); }
+  50% { transform: translate3d(10%, 8%, 0) scale(1.18); }
+  100% { transform: translate3d(-8%, -6%, 0) scale(1); }
+}
+@keyframes meyAuroraB {
+  0% { transform: translate3d(6%, 10%, 0) scale(1.1); }
+  50% { transform: translate3d(-10%, -8%, 0) scale(1.28); }
+  100% { transform: translate3d(6%, 10%, 0) scale(1.1); }
+}
+@keyframes meyAuroraC {
+  0% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50% { transform: translate3d(-6%, 6%, 0) scale(1.2); }
+  100% { transform: translate3d(0, 0, 0) scale(1.05); }
 }
 
-.page-transition-exit-active {
-  opacity: 0;
-  transition: opacity 300ms;
+@media (prefers-reduced-motion: reduce) {
+  .aurora span,
+  .hero-fill {
+    animation: none !important;
+  }
 }
