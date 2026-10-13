@@ -4,13 +4,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { getMediaDetails, MediaDetails, getSeasonDetails, Episode } from '@/utils/api';
 import { Provider, getDefaultProvider } from '@/utils/providers';
+import { recordView } from '@/lib/history';
 import ProviderSelector from '@/components/ProviderSelector';
 import { Button } from '@/components/ui/button';
-import { 
-  ArrowLeft, 
-  Info, 
+import {
+  ArrowLeft,
+  Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ServerOff
 } from 'lucide-react';
 import {
   Select,
@@ -24,7 +26,7 @@ import Loader from '@/components/Loader';
 const Watch: React.FC = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
   const [media, setMedia] = useState<MediaDetails | null>(null);
-  const [provider, setProvider] = useState<Provider>(getDefaultProvider());
+  const [provider, setProvider] = useState<Provider | null>(getDefaultProvider());
   const [loading, setLoading] = useState(true);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [selectedEpisode, setSelectedEpisode] = useState<number>(1);
@@ -41,7 +43,22 @@ const Watch: React.FC = () => {
       try {
         const mediaData = await getMediaDetails(id, type as 'movie' | 'tv');
         setMedia(mediaData);
-        
+
+        // Record in Continue Watching / history
+        recordView({
+          id: mediaData.id,
+          title: mediaData.title,
+          name: mediaData.name,
+          poster_path: mediaData.poster_path,
+          backdrop_path: mediaData.backdrop_path,
+          overview: mediaData.overview,
+          vote_average: mediaData.vote_average,
+          release_date: mediaData.release_date,
+          first_air_date: mediaData.first_air_date,
+          media_type: type as 'movie' | 'tv',
+          genre_ids: mediaData.genres?.map((g) => g.id) || [],
+        });
+
         if (type === 'tv') {
           const seasonData = await getSeasonDetails(id, selectedSeason);
           setEpisodes(seasonData.episodes);
@@ -71,8 +88,8 @@ const Watch: React.FC = () => {
   };
 
   const getWatchUrl = () => {
-    if (!media) return '';
-    
+    if (!media || !provider) return '';
+
     if (type === 'movie') {
       return provider.movieUrl.replace('{tmdb_id}', id || '');
     } else {
@@ -122,13 +139,32 @@ const Watch: React.FC = () => {
         {/* Player Container */}
         <div className="w-full bg-black">
           <div className="aspect-video max-w-7xl mx-auto relative">
-            <iframe
-              src={watchUrl}
-              className="w-full h-full"
-              frameBorder="0"
-              allowFullScreen
-              title={title}
-            ></iframe>
+            {provider && watchUrl ? (
+              <iframe
+                src={watchUrl}
+                className="w-full h-full"
+                frameBorder="0"
+                allowFullScreen
+                title={title}
+              ></iframe>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-center px-6 bg-gradient-to-b from-background to-black">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-gradient brand-glow mb-4">
+                  <ServerOff size={30} className="text-brand-foreground" />
+                </div>
+                <h2 className="text-xl font-bold text-white">Aucune source configurée</h2>
+                <p className="text-muted-foreground text-sm mt-2 max-w-md">
+                  Ajoute ta source de lecture (Plex, Pluto TV, ton serveur…) pour
+                  lancer «&nbsp;{title}&nbsp;».
+                </p>
+                <Button
+                  onClick={() => navigate('/settings')}
+                  className="mt-5 rounded-full bg-brand-gradient text-brand-foreground hover:opacity-90 border-0"
+                >
+                  Configurer une source
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         
@@ -243,10 +279,10 @@ const Watch: React.FC = () => {
               <h3 className="text-lg font-medium mb-2">
                 S{selectedSeason}:E{selectedEpisode} - {currentEpisode.name}
               </h3>
-              <p className="text-halo-600 text-sm mb-2">
+              <p className="text-muted-foreground text-sm mb-2">
                 {new Date(currentEpisode.air_date).toLocaleDateString()} • {currentEpisode.runtime} min
               </p>
-              <p className="text-halo-800">
+              <p className="text-white/80">
                 {currentEpisode.overview || 'No overview available for this episode.'}
               </p>
             </div>
@@ -256,17 +292,17 @@ const Watch: React.FC = () => {
           {type === 'movie' && showDetails && (
             <div className="mb-8 animate-fade-in">
               <h3 className="text-lg font-medium mb-2">{media.title}</h3>
-              <p className="text-halo-600 text-sm mb-2">
+              <p className="text-muted-foreground text-sm mb-2">
                 {media.release_date && new Date(media.release_date).toLocaleDateString()} • {media.runtime} min
               </p>
-              <p className="text-halo-800">
+              <p className="text-white/80">
                 {media.overview || 'No overview available.'}
               </p>
             </div>
           )}
           
           {/* Provider warning */}
-          {provider.warning && (
+          {provider?.warning && (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
               <div className="flex">
                 <div>
