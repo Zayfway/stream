@@ -28,10 +28,100 @@ export const notifySourcesUpdated = () => {
 
 /*
   ►► SOURCES PAR DÉFAUT ◄◄
-  Catalogue complet des 14 providers compatibles TMDB.
+  Catalogue complet des providers vidéo rapides et fiables compatibles TMDB.
 */
 export const DEFAULT_SOURCES: Provider[] = [
-  // --- TES SOURCES D'ORIGINE ---
+  {
+    id: 'vidlink',
+    name: 'VidLink.pro ⚡ (Style Cinejoy)',
+    movieUrl: 'https://vidlink.pro/movie/{tmdb_id}',
+    tvUrl: 'https://vidlink.pro/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Lecteur fluide et rapide (recommandé)',
+  },
+  {
+    id: 'vidsrc',
+    name: 'Vidsrc.su ⭐',
+    movieUrl: 'https://vidsrc.su/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.su/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Serveur principal très stable',
+  },
+  {
+    id: 'embedsu',
+    name: 'Embed.su 🚀',
+    movieUrl: 'https://embed.su/embed/movie/{tmdb_id}',
+    tvUrl: 'https://embed.su/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Excellente qualité HD',
+  },
+  {
+    id: 'vixsrc',
+    name: 'VixSrc 🎬',
+    movieUrl: 'https://vixsrc.to/movie/{tmdb_id}',
+    tvUrl: 'https://vixsrc.to/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Bonne alternative rapide',
+  },
+  {
+    id: 'autoembed',
+    name: 'AutoEmbed ⚡',
+    movieUrl: 'https://player.autoembed.cc/embed/movie/{tmdb_id}',
+    tvUrl: 'https://player.autoembed.cc/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Chargement rapide',
+  },
+  {
+    id: 'vidsrcvip',
+    name: 'VidSrc.vip',
+    movieUrl: 'https://vidsrc.vip/embed/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.vip/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Serveur de secours VIP',
+  },
+  {
+    id: 'videasy',
+    name: 'Videasy',
+    movieUrl: 'https://player.videasy.net/movie/{tmdb_id}',
+    tvUrl: 'https://player.videasy.net/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Lecteur simple',
+  },
+  {
+    id: 'multiembed',
+    name: 'MultiEmbed 🌐',
+    movieUrl: 'https://multiembed.mov/?video_id={tmdb_id}&tmdb=1',
+    tvUrl: 'https://multiembed.mov/?video_id={tmdb_id}&tmdb=1&s={season_number}&e={episode_number}',
+    warning: 'Multi-serveurs intégrés en secours',
+  },
+  {
+    id: 'vidsrccc',
+    name: 'VidSrc CC',
+    movieUrl: 'https://vidsrc.cc/v2/embed/movie/{tmdb_id}',
+    tvUrl: 'https://vidsrc.cc/v2/embed/tv/{tmdb_id}/{season_number}/{episode_number}',
+    warning: 'Multi-streams',
+  },
+  {
+    id: '2embed',
+    name: '2Embed',
+    movieUrl: 'https://www.2embed.cc/embed/{tmdb_id}',
+    tvUrl: 'https://www.2embed.cc/embedtv/{tmdb_id}&s={season_number}&e={episode_number}',
+    warning: 'Alternative de secours',
+  },
+  {
+    id: 'smashystream',
+    name: 'SmashyStream',
+    movieUrl: 'https://player.smashy.stream/movie/{tmdb_id}',
+    tvUrl: 'https://player.smashy.stream/tv/{tmdb_id}?s={season_number}&e={episode_number}',
+    warning: 'Serveur de secours',
+  },
+  {
+    id: 'moviesapi',
+    name: 'MoviesAPI',
+    movieUrl: 'https://moviesapi.club/movie/{tmdb_id}',
+    tvUrl: 'https://moviesapi.club/tv/{tmdb_id}-{season_number}-{episode_number}',
+    warning: 'Serveur rapide',
+  },
+  {
+    id: 'trailer',
+    name: 'Bande-Annonce Officielle (HD) 🎬',
+    movieUrl: 'https://www.youtube-nocookie.com/embed?listType=search&list={tmdb_id}+official+trailer',
+    tvUrl: 'https://www.youtube-nocookie.com/embed?listType=search&list={tmdb_id}+season+{season_number}+trailer',
+    warning: 'Source légale (YouTube)',
+  },
   {
     id: 'vidsrc',
     name: 'Vidsrc.su ⭐',
@@ -174,9 +264,9 @@ export const hasProviders = (): boolean => getSources().length > 0;
 
 export const getFavoriteProviderId = (): string => {
   try {
-    return localStorage.getItem(DEFAULT_SOURCE_KEY) || getSources()[0]?.id || 'vidsrc';
+    return localStorage.getItem(DEFAULT_SOURCE_KEY) || getSources()[0]?.id || 'vidlink';
   } catch {
-    return getSources()[0]?.id || 'vidsrc';
+    return getSources()[0]?.id || 'vidlink';
   }
 };
 
