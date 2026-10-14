@@ -35,7 +35,7 @@ const ContinueWatching: React.FC = () => {
           return (
             <div key={m.id} className="group shrink-0 w-[260px] sm:w-[300px] snap-start">
               <div
-                onClick={() => navigate(`/watch/${type}/${m.id}`)}
+                onClick={() => navigate(`/details/${type}/${m.id}`)}
                 className="relative aspect-video rounded-xl overflow-hidden cursor-pointer border border-white/10"
               >
                 {img ? (

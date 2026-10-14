@@ -164,10 +164,10 @@ const HeroCarousel: React.FC<{ onBackdrop?: (url: string | null) => void }> = ({
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <button
-                onClick={() => navigate(`/watch/${type}/${current.id}`)}
+                onClick={() => navigate(`/details/${type}/${current.id}`)}
                 className="flex items-center gap-2 rounded-full bg-white px-7 py-3 font-bold text-black transition hover:bg-white/90"
               >
-                <Play size={20} className="fill-black" /> Play
+                <Play size={20} className="fill-black" /> Où regarder
               </button>
 
               <button

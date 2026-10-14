@@ -159,9 +159,10 @@ const Details: React.FC = () => {
               )}
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
-                <button onClick={() => navigate(`/watch/${mt}/${id}`)}
+                <button
+                  onClick={() => (document.getElementById('where') || document.getElementById('trailers') || document.getElementById('casting'))?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   className="flex items-center gap-2 rounded-full bg-white px-7 py-3 font-bold text-black transition hover:bg-white/90">
-                  <Play size={20} className="fill-black" /> Play
+                  <Play size={20} className="fill-black" /> Où regarder
                 </button>
                 <WatchlistButton media={mediaForList} variant="button" size={18} />
               </div>
@@ -188,7 +189,7 @@ const Details: React.FC = () => {
 
               {/* Where to watch */}
               {providers.length > 0 && (
-                <div className="mt-6">
+                <div className="mt-6 scroll-mt-28" id="where">
                   <p className="text-sm font-semibold text-white mb-2">Où regarder</p>
                   <div className="flex flex-wrap gap-2.5">
                     {providers.map((p) => (
@@ -224,7 +225,7 @@ const Details: React.FC = () => {
 
           {/* Cast */}
           {cast.length > 0 && (
-            <section className="mt-12 text-left">
+            <section className="mt-12 text-left scroll-mt-28" id="casting">
               <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Casting</h2>
               <div className="flex gap-5 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                 {cast.map((c) => (
@@ -246,7 +247,7 @@ const Details: React.FC = () => {
 
           {/* Trailers */}
           {videos.length > 0 && (
-            <section className="mt-10 text-left">
+            <section className="mt-10 text-left scroll-mt-28" id="trailers">
               <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Bandes-annonces</h2>
               <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                 {videos.map((v) => (
