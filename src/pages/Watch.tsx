@@ -6,6 +6,12 @@ import Hls from 'hls.js';
 import { getMediaDetails, MediaDetails, getSeasonDetails, Episode } from '@/utils/api';
 import { Provider, getSources, getDefaultProvider, setFavoriteProvider } from '@/utils/providers';
 import { fetchSubtitles, SubtitleTrack, loadSubtitleAsVttBlob } from '@/utils/subtitles';
+import {
+  resolveDirectHLSStream,
+  DirectStreamResult,
+  getResolverEndpoint,
+  setResolverEndpoint,
+} from '@/utils/resolver';
 import { recordView } from '@/lib/history';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +39,8 @@ import {
   Info,
   Search,
   Download,
+  Sparkles,
+  Play,
 } from 'lucide-react';
 import {
   Select,
@@ -83,6 +91,12 @@ const Watch: React.FC = () => {
   // Direct HLS Video Player refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
+
+  // Direct Stream state (Method 1: HLS Resolver)
+  const [directStream, setDirectStream] = useState<DirectStreamResult | null>(null);
+  const [isResolvingDirect, setIsResolvingDirect] = useState(false);
+  const [useDirectStream, setUseDirectStream] = useState(false);
+  const [resolverApiUrl, setResolverApiUrl] = useState(getResolverEndpoint());
 
   // Watch Party State (P2P via WebRTC / PeerJS)
   const [partyCode, setPartyCode] = useState<string | null>(null);
@@ -152,6 +166,9 @@ const Watch: React.FC = () => {
 
   // Generate Stream URL
   const getWatchUrl = () => {
+    if (useDirectStream && directStream?.sourceUrl) {
+      return directStream.sourceUrl;
+    }
     if (!media || !provider) return '';
     if (type === 'movie') {
       return provider.movieUrl.replace('{tmdb_id}', id || '');
@@ -164,7 +181,34 @@ const Watch: React.FC = () => {
   };
 
   const watchUrl = getWatchUrl();
-  const isHlsStream = Boolean(watchUrl && (watchUrl.includes('.m3u8') || provider?.isHLSPlayer));
+  const isHlsStream = Boolean(
+    useDirectStream || (watchUrl && (watchUrl.includes('.m3u8') || provider?.isHLSPlayer))
+  );
+
+  // Attempt to resolve direct HLS stream (Method 1)
+  useEffect(() => {
+    if (!media || !id) return;
+    let isMounted = true;
+    setIsResolvingDirect(true);
+
+    const title = media.title || media.name || '';
+    resolveDirectHLSStream(id, type as 'movie' | 'tv', selectedSeason, selectedEpisode, title)
+      .then((res) => {
+        if (isMounted) {
+          if (res && res.sourceUrl) {
+            setDirectStream(res);
+          }
+          setIsResolvingDirect(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsResolvingDirect(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, type, selectedSeason, selectedEpisode, media]);
 
   // Live subtitles fetcher
   useEffect(() => {
@@ -757,9 +801,9 @@ const Watch: React.FC = () => {
             </div>
           )}
 
-          {/* VUE : LISTE DES SERVEURS */}
+          {/* VUE : LISTE DES SERVEURS & FLUX DIRECT HLS */}
           {settingsView === 'servers' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-white/10">
                 <button
                   onClick={() => setSettingsView('main')}
@@ -768,33 +812,113 @@ const Watch: React.FC = () => {
                   <ArrowLeft size={16} />
                   <span>Retour</span>
                 </button>
-                <span className="text-xs font-bold uppercase tracking-wider text-white">Choisir un serveur</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-white">Sources Vidéo</span>
                 <button onClick={() => setSettingsOpen(false)} className="text-white/60 hover:text-white">
                   <X size={16} />
                 </button>
               </div>
 
-              <div className="max-h-[320px] overflow-y-auto space-y-1.5 pr-1">
-                {providersList.map((p) => {
-                  const isCur = p.id === provider?.id;
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => handleSelectServer(p)}
-                      className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition ${
-                        isCur
-                          ? 'bg-[#95FF50]/20 border border-[#95FF50]/50 text-white'
-                          : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80'
+              {/* SECTION 1 : MODE DIRECT HLS (MÉTHODE 1) */}
+              <div className="p-3 rounded-2xl bg-gradient-to-br from-[#95FF50]/15 to-emerald-950/20 border border-[#95FF50]/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-[#95FF50]" />
+                    <span className="text-xs font-bold text-white">Flux Direct HLS (Sans iframe)</span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#95FF50] text-black">
+                    Méthode 1
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-white/70 leading-relaxed">
+                  Extrait automatiquement le fichier <strong className="text-white">.m3u8</strong> brut pour jouer la vidéo directement dans le lecteur natif HTML5 sans aucune publicité.
+                </p>
+
+                {directStream ? (
+                  <div className="pt-1 flex items-center justify-between">
+                    <div className="text-[11px] text-white/90">
+                      <span>Qualité : </span>
+                      <strong className="text-[#95FF50]">{directStream.qualities[0]?.quality || '1080p'}</strong>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const next = !useDirectStream;
+                        setUseDirectStream(next);
+                        toast.success(next ? 'Flux direct HLS activé !' : 'Retour aux serveurs embed');
+                      }}
+                      className={`h-7 px-3 rounded-full text-xs font-bold transition ${
+                        useDirectStream
+                          ? 'bg-[#95FF50] text-black hover:bg-[#85ee40]'
+                          : 'bg-white/10 hover:bg-white/20 text-white'
                       }`}
                     >
-                      <div className="flex flex-col truncate pr-2">
-                        <span className="font-semibold">{p.name}</span>
-                        {p.warning && <span className="text-[10px] text-white/50 truncate">{p.warning}</span>}
-                      </div>
-                      {isCur && <Check size={16} className="text-[#95FF50] shrink-0" />}
+                      {useDirectStream ? 'Désactiver Direct' : 'Activer Direct HLS'}
+                    </Button>
+                  </div>
+                ) : isResolvingDirect ? (
+                  <div className="flex items-center gap-2 text-xs text-[#95FF50] pt-1">
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span>Recherche d'un flux .m3u8 disponible...</span>
+                  </div>
+                ) : (
+                  <div className="pt-1 flex items-center justify-between">
+                    <span className="text-[11px] text-white/50">Flux direct en attente</span>
+                    <button
+                      onClick={() => {
+                        setIsResolvingDirect(true);
+                        const title = media?.title || media?.name || '';
+                        resolveDirectHLSStream(id || '', type as 'movie' | 'tv', selectedSeason, selectedEpisode, title)
+                          .then((res) => {
+                            if (res) {
+                              setDirectStream(res);
+                              setUseDirectStream(true);
+                              toast.success('Flux HLS direct trouvé et activé !');
+                            } else {
+                              toast.info('Aucun flux direct instantané, utilisation des serveurs embed');
+                            }
+                            setIsResolvingDirect(false);
+                          });
+                      }}
+                      className="text-[11px] text-[#95FF50] hover:underline font-semibold"
+                    >
+                      Scanner maintenant
                     </button>
-                  );
-                })}
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 2 : SERVEURS EMBED CLASSIQUES */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 block px-1">
+                  Serveurs de streaming alternatifs ({providersList.length})
+                </span>
+
+                <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-1">
+                  {providersList.map((p) => {
+                    const isCur = !useDirectStream && p.id === provider?.id;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setUseDirectStream(false);
+                          handleSelectServer(p);
+                        }}
+                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition ${
+                          isCur
+                            ? 'bg-[#95FF50]/20 border border-[#95FF50]/50 text-white'
+                            : 'bg-white/[0.04] hover:bg-white/[0.08] text-white/80'
+                        }`}
+                      >
+                        <div className="flex flex-col truncate pr-2">
+                          <span className="font-semibold">{p.name}</span>
+                          {p.warning && <span className="text-[10px] text-white/50 truncate">{p.warning}</span>}
+                        </div>
+                        {isCur && <Check size={16} className="text-[#95FF50] shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
