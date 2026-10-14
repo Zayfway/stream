@@ -369,3 +369,14 @@
     animation: none !important;
   }
 }
+
+/* ---- iOS safe areas (Capacitor / Dynamic Island) ---- */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.page-top {
+  padding-top: calc(7rem + env(safe-area-inset-top, 0px));
+}
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

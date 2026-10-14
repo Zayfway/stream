@@ -88,7 +88,7 @@ const Search: React.FC = () => {
 
       <Navbar />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 page-top pb-16">
         {/* Hero search */}
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white">

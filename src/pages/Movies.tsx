@@ -20,7 +20,7 @@ const Movies: React.FC = () => {
       <Aurora />
       <div className="relative z-10">
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-28 pb-16 text-left">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-28 page-top pb-16 text-left">
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-6">Films</h1>
 
           <div className="mb-8">

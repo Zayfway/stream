@@ -30,7 +30,7 @@ const Watchlist: React.FC = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <div className="pt-24 pb-16 px-6 md:px-12 max-w-7xl mx-auto">
+      <div className="pt-24 page-top pb-16 px-6 md:px-12 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-4 text-white">My Watchlist</h1>
         
         {watchlist.length === 0 ? (
