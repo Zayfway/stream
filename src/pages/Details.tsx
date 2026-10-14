@@ -160,9 +160,10 @@ const Details: React.FC = () => {
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <button
-                  onClick={() => (document.getElementById('where') || document.getElementById('trailers') || document.getElementById('casting'))?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="flex items-center gap-2 rounded-full bg-white px-7 py-3 font-bold text-black transition hover:bg-white/90">
-                  <Play size={20} className="fill-black" /> Où regarder
+                  onClick={() => navigate(`/watch/${mt}/${id}`)}
+                  className="flex items-center gap-2 rounded-full bg-white px-7 py-3 font-bold text-black transition hover:bg-white/90 shadow-lg"
+                >
+                  <Play size={20} className="fill-black" /> Regarder
                 </button>
                 <WatchlistButton media={mediaForList} variant="button" size={18} />
               </div>

@@ -394,3 +394,8 @@
 body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* room for the mobile tab bar (above the home indicator) */
+@media (max-width: 767px) {
+  body { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px); }
+}

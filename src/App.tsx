@@ -18,7 +18,9 @@ import Watchlist from "./pages/Watchlist";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
 import ProviderResults from "./pages/ProviderResults";
+import Watch from "./pages/Watch";
 import NotFound from "./pages/NotFound";
+import BottomTabBar from "./components/BottomTabBar";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,7 @@ const App = () => (
             <Route path="/movies" element={<Movies />} />
             <Route path="/tv-shows" element={<TVShows />} />
             <Route path="/details/:type/:id" element={<Details />} />
+            <Route path="/watch/:type/:id" element={<Watch />} />
             <Route path="/search" element={<Search />} />
             <Route path="/watchlist" element={<Watchlist />} />
             <Route path="/settings" element={<Settings />} />
@@ -45,6 +48,7 @@ const App = () => (
             <Route path="/provider/:id" element={<ProviderResults />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <BottomTabBar />
         </BrowserRouter>
          </TooltipProvider>
          </BackgroundProvider>

@@ -41,6 +41,19 @@ export const saveVideo = (blob: Blob) => tx('readwrite', (s) => s.put(blob, KEY)
 export const loadVideo = () => tx('readonly', (s) => s.get(KEY)) as Promise<Blob | undefined>;
 export const deleteVideo = () => tx('readwrite', (s) => s.delete(KEY));
 
+/* ---- liquid look: sharpness + colour source ---- */
+export interface LiquidSettings { sharp: number; colorMode: 'theme' | 'custom'; a: string; b: string }
+export const LIQUID_KEY = 'meystream-liquid';
+export const DEFAULT_LIQUID: LiquidSettings = { sharp: 0.65, colorMode: 'theme', a: '#36bd89', b: '#0a2e23' };
+export const getLiquid = (): LiquidSettings => {
+  try { const r = localStorage.getItem(LIQUID_KEY); return r ? { ...DEFAULT_LIQUID, ...JSON.parse(r) } : DEFAULT_LIQUID; } catch { return DEFAULT_LIQUID; }
+};
+export const setLiquidStored = (l: LiquidSettings) => { try { localStorage.setItem(LIQUID_KEY, JSON.stringify(l)); } catch { /* ignore */ } };
+export function hexToRgb01(hex: string): [number, number, number] {
+  let h = hex.replace('#', ''); if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const n = parseInt(h, 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
 export const MAX_VIDEO_BYTES = 80 * 1024 * 1024;
 export const VIDEO_ACCEPT = ['video/mp4', 'video/webm', 'video/quicktime'];
 

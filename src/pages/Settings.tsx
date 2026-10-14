@@ -8,7 +8,7 @@ import { useCursor } from '@/contexts/CursorProvider';
 import { useSearchButton } from '@/contexts/SearchButtonProvider';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useBackground } from '@/contexts/BackgroundProvider';
-import { BG_MODES, VIDEO_ACCEPT, MAX_VIDEO_BYTES } from '@/lib/background';
+import { BG_MODES, VIDEO_ACCEPT, MAX_VIDEO_BYTES, DEFAULT_LIQUID } from '@/lib/background';
 import { makeId } from '@/lib/customTheme';
 import { hexHue } from '@/lib/color';
 import { CURSOR_PRESETS, fileToCursorUrl, CursorConfig } from '@/lib/cursor';
@@ -29,14 +29,28 @@ import {
   LogOut,
   Waves,
   Video,
+  Pencil,
+  Plus,
+  Radio,
 } from 'lucide-react';
+import {
+  Provider,
+  getSources,
+  addSource,
+  updateSource,
+  removeSource,
+  getFavoriteProviderId,
+  setFavoriteProvider,
+  SOURCES_UPDATED_EVENT,
+} from '@/utils/providers';
 
-type TabId = 'account' | 'appearance' | 'playback' | 'about';
+type TabId = 'account' | 'appearance' | 'sources' | 'playback' | 'about';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'account', label: 'Compte', icon: User },
   { id: 'appearance', label: 'Apparence', icon: Palette },
-  { id: 'playback', label: 'Lecture', icon: Play },
+  { id: 'sources', label: 'Sources', icon: Play },
+  { id: 'playback', label: 'Région', icon: Info },
   { id: 'about', label: 'À propos', icon: Info },
 ];
 
@@ -201,7 +215,7 @@ const ThemeBuilder: React.FC = () => {
 
 /* ------------------------------------------------------ Animated background */
 const BackgroundSection: React.FC = () => {
-  const { mode, setMode, videoUrl, importVideo, clearVideo } = useBackground();
+  const { mode, setMode, videoUrl, importVideo, clearVideo, liquid, setLiquid } = useBackground();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onUpload = async (f: File) => {
@@ -212,14 +226,12 @@ const BackgroundSection: React.FC = () => {
   };
 
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-5">
       <div className="flex items-center gap-2">
         <Waves size={18} className="text-brand" />
         <h3 className="font-semibold text-white">Fond animé</h3>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Le fond derrière la recherche, les réglages et les listes. Le liquide suit les couleurs du thème (Aurora = vert &amp; noir).
-      </p>
+      <p className="text-sm text-muted-foreground">Le fond derrière la recherche, les réglages et les listes.</p>
 
       <div className="flex flex-wrap gap-2.5">
         {BG_MODES.map((m) => {
@@ -233,6 +245,38 @@ const BackgroundSection: React.FC = () => {
           );
         })}
       </div>
+
+      {mode === 'liquid' && (
+        <div className="space-y-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <label className="block text-sm text-white/80">
+            <span className="flex justify-between"><span>Netteté du liquide</span><span className="text-muted-foreground">{Math.round(liquid.sharp * 100)}%</span></span>
+            <input type="range" min={0} max={1} step={0.02} value={liquid.sharp}
+              onChange={(e) => setLiquid({ ...liquid, sharp: Number(e.target.value) })} className="w-full mt-2 accent-white" />
+          </label>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-sm text-white/80 mr-1">Couleurs</span>
+            {([['theme', 'Suivre le thème'], ['custom', 'Mes couleurs']] as const).map(([id, label]) => (
+              <button key={id} onClick={() => setLiquid({ ...liquid, colorMode: id })}
+                className={`rounded-xl border px-3.5 py-1.5 text-sm transition ${liquid.colorMode === id ? 'border-transparent brand-ring text-white' : 'border-white/12 text-white/75 hover:bg-white/10 hover:text-white'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {liquid.colorMode === 'custom' && (
+            <div className="flex flex-wrap items-center gap-5">
+              <label className="flex items-center gap-3 text-sm text-white/80">Encre
+                <input type="color" value={liquid.a} onChange={(e) => setLiquid({ ...liquid, a: e.target.value })} className="h-9 w-14 rounded-md bg-transparent cursor-pointer" />
+              </label>
+              <label className="flex items-center gap-3 text-sm text-white/80">Fond
+                <input type="color" value={liquid.b} onChange={(e) => setLiquid({ ...liquid, b: e.target.value })} className="h-9 w-14 rounded-md bg-transparent cursor-pointer" />
+              </label>
+              <button onClick={() => setLiquid({ ...liquid, a: DEFAULT_LIQUID.a, b: DEFAULT_LIQUID.b })} className="text-sm text-muted-foreground hover:text-white transition">Vert chimie</button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         {videoUrl && (
@@ -362,6 +406,174 @@ const SearchButtonSection: React.FC = () => {
 };
 
 /* ------------------------------------------------------------- Sources manager */
+const EMPTY_FORM = { name: '', movieUrl: '', tvUrl: '' };
+
+const SourcesSection: React.FC = () => {
+  const [sources, setSources] = useState<Provider[]>(getSources);
+  const [def, setDef] = useState(getFavoriteProviderId());
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const sync = () => {
+      setSources(getSources());
+      setDef(getFavoriteProviderId());
+    };
+    window.addEventListener(SOURCES_UPDATED_EVENT, sync);
+    return () => window.removeEventListener(SOURCES_UPDATED_EVENT, sync);
+  }, []);
+
+  const startEdit = (s: Provider) => {
+    setEditingId(s.id);
+    setForm({ name: s.name, movieUrl: s.movieUrl, tvUrl: s.tvUrl });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+  };
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.movieUrl) {
+      toast.error('Nom et URL film requis');
+      return;
+    }
+    if (editingId) {
+      updateSource({
+        id: editingId,
+        name: form.name,
+        movieUrl: form.movieUrl,
+        tvUrl: form.tvUrl || form.movieUrl,
+      });
+      toast.success('Source mise à jour');
+    } else {
+      addSource({
+        id: makeId(),
+        name: form.name,
+        movieUrl: form.movieUrl,
+        tvUrl: form.tvUrl || form.movieUrl,
+      });
+      toast.success('Source ajoutée');
+    }
+    cancelEdit();
+  };
+
+  return (
+    <Section
+      title="Sources de Streaming"
+      desc="Toutes les sources de lecture configurées pour ton application (avec les jetons {tmdb_id}, {season_number}, {episode_number})."
+    >
+      {sources.length > 0 && (
+        <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+          {sources.map((s) => (
+            <Card
+              key={s.id}
+              className={`flex items-center justify-between gap-3 py-3 px-4 ${
+                editingId === s.id ? 'brand-ring border-transparent' : ''
+              }`}
+            >
+              <label className="flex items-center gap-3 cursor-pointer min-w-0">
+                <input
+                  type="radio"
+                  name="default-source"
+                  checked={def === s.id}
+                  onChange={() => {
+                    setFavoriteProvider(s.id);
+                    setDef(s.id);
+                    toast.success(`Source par défaut : ${s.name}`);
+                  }}
+                  className="accent-white shrink-0"
+                />
+                <div className="min-w-0">
+                  <p className="font-semibold text-white truncate text-sm">
+                    {s.name}{' '}
+                    {def === s.id && <span className="text-xs text-[#95FF50] font-bold">· par défaut</span>}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate max-w-[200px] sm:max-w-md font-mono">
+                    {s.movieUrl}
+                  </p>
+                </div>
+              </label>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => startEdit(s)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/10 hover:text-white"
+                  aria-label="Modifier"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={() => {
+                    removeSource(s.id);
+                    if (editingId === s.id) cancelEdit();
+                    toast('Source retirée');
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-white/10 hover:text-white"
+                  aria-label="Supprimer"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Card>
+        <form onSubmit={submit} className="space-y-3">
+          <p className="font-semibold text-white flex items-center gap-2 text-sm">
+            {editingId ? (
+              <>
+                <Pencil size={14} /> Modifier la source
+              </>
+            ) : (
+              <>
+                <Plus size={15} /> Ajouter une source personnalisée
+              </>
+            )}
+          </p>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Nom (ex: Mon Serveur Plex ou HLS)"
+            className="h-10 w-full rounded-xl border border-white/12 bg-white/[0.05] px-3.5 text-xs text-white placeholder:text-muted-foreground outline-none focus:border-white/25"
+          />
+          <input
+            value={form.movieUrl}
+            onChange={(e) => setForm({ ...form, movieUrl: e.target.value })}
+            placeholder="URL film — …/movie/{tmdb_id}"
+            className="h-10 w-full rounded-xl border border-white/12 bg-white/[0.05] px-3.5 text-xs text-white placeholder:text-muted-foreground outline-none focus:border-white/25 font-mono"
+          />
+          <input
+            value={form.tvUrl}
+            onChange={(e) => setForm({ ...form, tvUrl: e.target.value })}
+            placeholder="URL série — …/tv/{tmdb_id}/{season_number}/{episode_number} (optionnel)"
+            className="h-10 w-full rounded-xl border border-white/12 bg-white/[0.05] px-3.5 text-xs text-white placeholder:text-muted-foreground outline-none focus:border-white/25 font-mono"
+          />
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="h-9 px-4 rounded-full bg-white text-black font-bold text-xs hover:bg-white/90 transition"
+            >
+              {editingId ? 'Enregistrer' : 'Ajouter'}
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="h-9 px-4 rounded-full border border-white/20 text-white text-xs hover:bg-white/10 transition"
+              >
+                Annuler
+              </button>
+            )}
+          </div>
+        </form>
+      </Card>
+    </Section>
+  );
+};
+
 /* -------------------------------------------------------------- Playback section */
 const PlaybackSection: React.FC = () => {
   const [region, setRegion] = useState(getWatchRegion());
@@ -470,6 +682,7 @@ const Settings: React.FC = () => {
             </div>
           </div>
         )}
+        {tab === 'sources' && <SourcesSection />}
         {tab === 'playback' && <PlaybackSection />}
 
         {tab === 'about' && (

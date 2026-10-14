@@ -5,9 +5,14 @@ const config: CapacitorConfig = {
   appName: 'MeyStream',
   webDir: 'dist',
   backgroundColor: '#0d070b',
+  server: {
+    allowNavigation: ['*'],
+  },
   ios: {
     contentInset: 'always',
     backgroundColor: '#0d070b',
+    allowsLinkPreview: false,
+    scrollEnabled: true,
   },
 };
 

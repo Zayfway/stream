@@ -11,7 +11,7 @@ const reducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-r
  * Picks the user's choice: real-time liquid, aurora, their own looping video, or nothing.
  */
 const AnimatedBackground: React.FC = () => {
-  const { mode, videoUrl } = useBackground();
+  const { mode, videoUrl, liquid } = useBackground();
 
   if (mode === 'none') return null;
   if (mode === 'video' && videoUrl) {
@@ -25,8 +25,8 @@ const AnimatedBackground: React.FC = () => {
   if (mode === 'liquid' && supportsWebGL && !reducedMotion) {
     return (
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <LiquidBackground className="opacity-80" />
-        <div className="absolute inset-0 bg-background/35" />
+        <LiquidBackground className="opacity-95" sharp={liquid.sharp} colors={liquid.colorMode === 'custom' ? [liquid.a, liquid.b] : null} />
+        <div className="absolute inset-0 bg-background/25" />
       </div>
     );
   }

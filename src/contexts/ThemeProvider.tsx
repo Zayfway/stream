@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { DEFAULT_THEME, THEME_STORAGE_KEY, THEMES, ThemeDef } from "@/lib/themes";
+import { syncAppIcon } from "@/lib/appIcon";
+import { hexToHslTriple } from "@/lib/color";
 import {
   CustomThemeInput,
   applyCustomTheme,
@@ -61,6 +63,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     applyTheme(theme, customThemes);
+    const custom = customThemes.find((c) => `custom:${c.id}` === theme);
+    void syncAppIcon(theme, custom ? hexToHslTriple(custom.brand) : undefined);
     try {
       localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { BgMode, getBgMode, setBgModeStored, saveVideo, loadVideo, deleteVideo } from '@/lib/background';
+import { BgMode, getBgMode, setBgModeStored, saveVideo, loadVideo, deleteVideo, LiquidSettings, getLiquid, setLiquidStored } from '@/lib/background';
 
 interface Ctx {
   mode: BgMode;
@@ -7,12 +7,16 @@ interface Ctx {
   videoUrl: string | null;
   importVideo: (file: File) => Promise<void>;
   clearVideo: () => Promise<void>;
+  liquid: LiquidSettings;
+  setLiquid: (l: LiquidSettings) => void;
 }
 const BackgroundContext = createContext<Ctx | undefined>(undefined);
 
 export const BackgroundProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mode, setModeState] = useState<BgMode>(getBgMode);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [liquid, setLiquidState] = useState<LiquidSettings>(getLiquid);
+  const setLiquid = (l: LiquidSettings) => { setLiquidState(l); setLiquidStored(l); };
 
   // Restore a previously imported video
   useEffect(() => {
@@ -36,7 +40,7 @@ export const BackgroundProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   return (
-    <BackgroundContext.Provider value={{ mode, setMode, videoUrl, importVideo, clearVideo }}>
+    <BackgroundContext.Provider value={{ mode, setMode, videoUrl, importVideo, clearVideo, liquid, setLiquid }}>
       {children}
     </BackgroundContext.Provider>
   );

@@ -27,7 +27,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ media, index = 0 }) => {
 
   const handleWatch = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/details/${mediaType}/${media.id}`);
+    navigate(`/watch/${mediaType}/${media.id}`);
   };
 
   // Delay for staggered animation
