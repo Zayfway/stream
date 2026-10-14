@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { searchMedia, getTrending, Media } from '@/utils/api';
 import Navbar from '@/components/Navbar';
-import Aurora from '@/components/Aurora';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import MediaGrid from '@/components/MediaGrid';
 import { addSearch, getSearches, removeSearch, clearSearches } from '@/lib/searchHistory';
 import { Search as SearchIcon, X, Clock } from 'lucide-react';
@@ -84,7 +84,7 @@ const Search: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <Aurora />
+      <AnimatedBackground />
 
       <Navbar />
 

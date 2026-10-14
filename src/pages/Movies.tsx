@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { discover } from '@/utils/api';
 import { getWatchRegion } from '@/utils/watchProviders';
 import Navbar from '@/components/Navbar';
-import Aurora from '@/components/Aurora';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import InfiniteMediaGrid from '@/components/InfiniteMediaGrid';
 import FilterBar, { Filters, DEFAULT_FILTERS } from '@/components/FilterBar';
 
@@ -17,7 +17,7 @@ const Movies: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <Aurora />
+      <AnimatedBackground />
       <div className="relative z-10">
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-28 page-top pb-16 text-left">

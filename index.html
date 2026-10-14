@@ -22,21 +22,30 @@
     <meta name="twitter:description" content="A sleek, themeable catalogue for movies and TV shows." />
     <meta name="twitter:image" content="/og-image.png" />
 
-    <!-- Apply the saved theme before paint to avoid a flash -->
+    <!-- Apply the saved theme before paint (no flash) and tint the intro with it -->
     <script>
       (function () {
         var root = document.documentElement;
+        var T = { sunset:['#d85f78','#e8824a'], flamingo:['#e05c93','#e36370'], ember:['#e37338','#d64c45'],
+                  peach:['#e89168','#d888a0'], aurora:['#36bd89','#35b3aa'], ocean:['#419fe0','#33b0cc'],
+                  grape:['#9b6ee0','#c072d0'], rosegold:['#d888a0','#d9a74d'], midnight:['#5f7fe3','#8873e0'],
+                  mono:['#d1d1d1','#8f8f8f'] };
+        var a = T.sunset[0], b = T.sunset[1];
         try {
           var t = localStorage.getItem('meystream-theme');
           if (t && t.indexOf('custom:') === 0) {
             var vars = JSON.parse(localStorage.getItem('meystream-active-custom-vars') || '{}');
             for (var k in vars) root.style.setProperty(k, vars[k]);
             root.setAttribute('data-theme', 'custom');
+            if (vars['--brand']) a = 'hsl(' + vars['--brand'].split(' ').join(',') + ')';
+            if (vars['--brand-2']) b = 'hsl(' + vars['--brand-2'].split(' ').join(',') + ')';
           } else {
-            var valid = ['sunset','flamingo','ember','peach','aurora','ocean','grape','rosegold','midnight','mono'];
-            root.setAttribute('data-theme', valid.indexOf(t) !== -1 ? t : 'sunset');
+            root.setAttribute('data-theme', T[t] ? t : 'sunset');
+            if (T[t]) { a = T[t][0]; b = T[t][1]; }
           }
         } catch (e) {}
+        root.style.setProperty('--splash-a', a);
+        root.style.setProperty('--splash-b', b);
         root.style.colorScheme = 'dark';
       })();
     </script>
@@ -53,8 +62,8 @@
       #splash.hide { opacity: 0; pointer-events: none; }
       /* two soft lights that bloom in and drift */
       #splash .glow { position: absolute; border-radius: 9999px; filter: blur(70px); opacity: 0; will-change: transform, opacity; }
-      #splash .g1 { width: 70vmax; height: 70vmax; left: -20vmax; top: -25vmax; background: radial-gradient(circle, #d85f78 0%, transparent 65%); animation: sBloom 1.6s cubic-bezier(.2,.7,.2,1) forwards, sDrift1 6s ease-in-out .4s infinite alternate; }
-      #splash .g2 { width: 60vmax; height: 60vmax; right: -18vmax; bottom: -22vmax; background: radial-gradient(circle, #e8824a 0%, transparent 65%); animation: sBloom 1.6s cubic-bezier(.2,.7,.2,1) .15s forwards, sDrift2 7s ease-in-out .4s infinite alternate; }
+      #splash .g1 { width: 70vmax; height: 70vmax; left: -20vmax; top: -25vmax; background: radial-gradient(circle, var(--splash-a, #d85f78) 0%, transparent 65%); animation: sBloom 1.6s cubic-bezier(.2,.7,.2,1) forwards, sDrift1 6s ease-in-out .4s infinite alternate; }
+      #splash .g2 { width: 60vmax; height: 60vmax; right: -18vmax; bottom: -22vmax; background: radial-gradient(circle, var(--splash-b, #e8824a) 0%, transparent 65%); animation: sBloom 1.6s cubic-bezier(.2,.7,.2,1) .15s forwards, sDrift2 7s ease-in-out .4s infinite alternate; }
       #splash .inner { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; }
       #splash .name {
         font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -63,14 +72,14 @@
         opacity: 0; filter: blur(14px); transform: translateY(10px) scale(.98);
         animation: sReveal 1s cubic-bezier(.2,.7,.2,1) .25s forwards;
       }
-      #splash .name .g { background: linear-gradient(135deg, #d85f78, #e8824a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      #splash .name .g { background: linear-gradient(135deg, var(--splash-a, #d85f78), var(--splash-b, #e8824a)); -webkit-background-clip: text; background-clip: text; color: transparent; }
       /* light sweep across the wordmark */
       #splash .name::after {
         content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
         background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
         transform: skewX(-18deg); animation: sSweep 1.1s ease-in-out 1s forwards;
       }
-      #splash .line { width: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #d85f78, #e8824a); animation: sLine .9s cubic-bezier(.2,.7,.2,1) .7s forwards; }
+      #splash .line { width: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--splash-a, #d85f78), var(--splash-b, #e8824a)); animation: sLine .9s cubic-bezier(.2,.7,.2,1) .7s forwards; }
       #splash .tag { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.55); opacity: 0; transform: translateY(6px); animation: sFade .7s ease 1.05s forwards; }
       @keyframes sBloom { to { opacity: .55; } }
       @keyframes sDrift1 { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(8vmax,6vmax,0) scale(1.15); } }

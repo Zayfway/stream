@@ -2,11 +2,13 @@ import React, { useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
-import Aurora from '@/components/Aurora';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { useCursor } from '@/contexts/CursorProvider';
 import { useSearchButton } from '@/contexts/SearchButtonProvider';
 import { useAuth } from '@/contexts/AuthProvider';
+import { useBackground } from '@/contexts/BackgroundProvider';
+import { BG_MODES, VIDEO_ACCEPT, MAX_VIDEO_BYTES } from '@/lib/background';
 import { makeId } from '@/lib/customTheme';
 import { hexHue } from '@/lib/color';
 import { CURSOR_PRESETS, fileToCursorUrl, CursorConfig } from '@/lib/cursor';
@@ -25,6 +27,8 @@ import {
   Upload,
   Search as SearchIcon,
   LogOut,
+  Waves,
+  Video,
 } from 'lucide-react';
 
 type TabId = 'account' | 'appearance' | 'playback' | 'about';
@@ -195,6 +199,62 @@ const ThemeBuilder: React.FC = () => {
   );
 };
 
+/* ------------------------------------------------------ Animated background */
+const BackgroundSection: React.FC = () => {
+  const { mode, setMode, videoUrl, importVideo, clearVideo } = useBackground();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onUpload = async (f: File) => {
+    if (!VIDEO_ACCEPT.includes(f.type)) { toast.error('Format : MP4, WebM ou MOV.'); return; }
+    if (f.size > MAX_VIDEO_BYTES) { toast.error('Trop lourde (max 80 Mo).'); return; }
+    try { await importVideo(f); toast.success('Vidéo importée — elle tourne en boucle en fond'); }
+    catch { toast.error('Import impossible'); }
+  };
+
+  return (
+    <Card className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Waves size={18} className="text-brand" />
+        <h3 className="font-semibold text-white">Fond animé</h3>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Le fond derrière la recherche, les réglages et les listes. Le liquide suit les couleurs du thème (Aurora = vert &amp; noir).
+      </p>
+
+      <div className="flex flex-wrap gap-2.5">
+        {BG_MODES.map((m) => {
+          const active = mode === m.id;
+          const disabled = m.id === 'video' && !videoUrl;
+          return (
+            <button key={m.id} onClick={() => !disabled && setMode(m.id)} disabled={disabled} title={m.desc}
+              className={`rounded-xl border px-4 py-2 text-sm transition ${active ? 'border-transparent brand-ring text-white' : 'border-white/12 text-white/75 hover:bg-white/10 hover:text-white'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
+              {m.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        {videoUrl && (
+          <video src={videoUrl} className="h-16 w-28 rounded-xl object-cover border border-white/12" muted loop autoPlay playsInline />
+        )}
+        <button onClick={() => fileRef.current?.click()}
+          className="flex items-center gap-2 rounded-full border border-white/12 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10 hover:text-white">
+          <Video size={15} /> {videoUrl ? 'Changer la vidéo' : 'Importer une vidéo'}
+        </button>
+        {videoUrl && (
+          <button onClick={() => { clearVideo(); toast('Vidéo retirée'); }} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-white transition">
+            <Trash2 size={15} /> Supprimer
+          </button>
+        )}
+        <input ref={fileRef} type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden"
+          onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} />
+      </div>
+      <p className="text-xs text-muted-foreground">MP4 / WebM / MOV, 80 Mo max — stockée sur l'appareil, lue en boucle sans son.</p>
+    </Card>
+  );
+};
+
 /* -------------------------------------------------------------- Cursor section */
 const cursorValueFor = (cfg: CursorConfig): string => {
   const url = cfg.presetId === 'custom'
@@ -333,7 +393,7 @@ const Settings: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <Aurora />
+      <AnimatedBackground />
       <Navbar />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 page-top pb-20 text-left">
@@ -401,6 +461,8 @@ const Settings: React.FC = () => {
             </Section>
 
             <ThemeBuilder />
+
+            <BackgroundSection />
 
             <div className="grid lg:grid-cols-2 gap-5">
               <CursorSection />

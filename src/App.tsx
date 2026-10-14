@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { CursorProvider } from "@/contexts/CursorProvider";
 import { SearchButtonProvider } from "@/contexts/SearchButtonProvider";
 import { AuthProvider } from "@/contexts/AuthProvider";
+import { BackgroundProvider } from "@/contexts/BackgroundProvider";
 import Index from "./pages/Index";
 import Movies from "./pages/Movies";
 import TVShows from "./pages/TVShows";
@@ -27,6 +28,7 @@ const App = () => (
       <CursorProvider>
        <SearchButtonProvider>
         <AuthProvider>
+         <BackgroundProvider>
          <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -45,6 +47,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
          </TooltipProvider>
+         </BackgroundProvider>
         </AuthProvider>
        </SearchButtonProvider>
       </CursorProvider>

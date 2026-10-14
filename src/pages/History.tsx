@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
-import Aurora from '@/components/Aurora';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import MediaGrid from '@/components/MediaGrid';
 import {
   getHistory,
@@ -21,7 +21,7 @@ const History: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <Aurora />
+      <AnimatedBackground />
       <div className="relative z-10">
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-28 page-top pb-16 text-left">
