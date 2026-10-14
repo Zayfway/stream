@@ -863,28 +863,16 @@ const Watch: React.FC = () => {
                     <span>Recherche d'un flux .m3u8 disponible...</span>
                   </div>
                 ) : (
-                  <div className="pt-1 flex items-center justify-between">
-                    <span className="text-[11px] text-white/50">Flux direct en attente</span>
-                    <button
-                      onClick={() => {
-                        setIsResolvingDirect(true);
-                        const title = media?.title || media?.name || '';
-                        resolveDirectHLSStream(id || '', type as 'movie' | 'tv', selectedSeason, selectedEpisode, title)
-                          .then((res) => {
-                            if (res) {
-                              setDirectStream(res);
-                              setUseDirectStream(true);
-                              toast.success('Flux HLS direct trouvé et activé !');
-                            } else {
-                              toast.info('Aucun flux direct instantané, utilisation des serveurs embed');
-                            }
-                            setIsResolvingDirect(false);
-                          });
-                      }}
-                      className="text-[11px] text-[#95FF50] hover:underline font-semibold"
-                    >
-                      Scanner maintenant
-                    </button>
+                  <div className="pt-1.5 space-y-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-white/60">Résolveur d'API HLS</span>
+                      <span className="text-[#95FF50] font-semibold">Consumet / Sudo-Flix</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-white/10 text-[10px] text-white/60 space-y-1">
+                      <p>
+                        💡 Les résolveurs publics ferment vite face au trafic. Pour un flux direct garanti, utilise le serveur <strong>Cinejoy Nebula ⚡</strong> ci-dessous ou tes serveurs ultra-rapides <strong>VidLink / Vidsrc</strong>.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
