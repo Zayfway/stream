@@ -2,8 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import Peer, { DataConnection } from 'peerjs';
+import Hls from 'hls.js';
 import { getMediaDetails, MediaDetails, getSeasonDetails, Episode } from '@/utils/api';
 import { Provider, getSources, getDefaultProvider, setFavoriteProvider } from '@/utils/providers';
+import { fetchSubtitles, SubtitleTrack, loadSubtitleAsVttBlob } from '@/utils/subtitles';
 import { recordView } from '@/lib/history';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +31,8 @@ import {
   Radio,
   LogOut,
   Info,
+  Search,
+  Download,
 } from 'lucide-react';
 import {
   Select,
@@ -68,6 +72,17 @@ const Watch: React.FC = () => {
   const [subtitleDelay, setSubtitleDelay] = useState(0);
   const [subtitleFont, setSubtitleFont] = useState<'Cinejoy' | 'Netflix' | 'Montserrat'>('Cinejoy');
   const [subtitleSize, setSubtitleSize] = useState(100);
+
+  // Subtitles Live API state
+  const [subtitlesList, setSubtitlesList] = useState<SubtitleTrack[]>([]);
+  const [subtitlesLoading, setSubtitlesLoading] = useState(false);
+  const [activeSubtitle, setActiveSubtitle] = useState<SubtitleTrack | null>(null);
+  const [subtitleSearch, setSubtitleSearch] = useState('');
+  const [activeTrackBlobUrl, setActiveTrackBlobUrl] = useState<string | null>(null);
+
+  // Direct HLS Video Player refs
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
 
   // Watch Party State (P2P via WebRTC / PeerJS)
   const [partyCode, setPartyCode] = useState<string | null>(null);
@@ -149,6 +164,82 @@ const Watch: React.FC = () => {
   };
 
   const watchUrl = getWatchUrl();
+  const isHlsStream = Boolean(watchUrl && (watchUrl.includes('.m3u8') || provider?.isHLSPlayer));
+
+  // Live subtitles fetcher
+  useEffect(() => {
+    if (!type || !id) return;
+    let isMounted = true;
+    setSubtitlesLoading(true);
+
+    fetchSubtitles(type as 'movie' | 'tv', id, selectedSeason, selectedEpisode)
+      .then((subs) => {
+        if (isMounted) {
+          setSubtitlesList(subs);
+          setSubtitlesLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Erreur lors de la récupération des sous-titres:', err);
+        if (isMounted) setSubtitlesLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [type, id, selectedSeason, selectedEpisode]);
+
+  // Handle subtitle selection & activation
+  const handleSelectSubtitle = async (sub: SubtitleTrack) => {
+    try {
+      if (activeSubtitle?.id === sub.id) {
+        setActiveSubtitle(null);
+        setActiveTrackBlobUrl(null);
+        toast.info('Sous-titre désactivé');
+        return;
+      }
+      toast.loading('Chargement du sous-titre...', { id: 'sub-load' });
+      const blobUrl = await loadSubtitleAsVttBlob(sub.url);
+      setActiveSubtitle(sub);
+      setActiveTrackBlobUrl(blobUrl);
+      toast.success(`Sous-titre activé : ${sub.flag} ${sub.label}`, { id: 'sub-load' });
+    } catch (e) {
+      toast.error('Erreur lors du chargement du sous-titre', { id: 'sub-load' });
+    }
+  };
+
+  const handleDownloadSubtitle = (sub: SubtitleTrack) => {
+    window.open(sub.url, '_blank');
+    toast.success(`Téléchargement lancé (${sub.label})`);
+  };
+
+  // HLS Native Video Player initialization
+  useEffect(() => {
+    if (!isHlsStream || !videoRef.current || !watchUrl) return;
+
+    if (Hls.isSupported()) {
+      if (hlsRef.current) hlsRef.current.destroy();
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+      });
+      hlsRef.current = hls;
+      hls.loadSource(watchUrl);
+      hls.attachMedia(videoRef.current);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        videoRef.current?.play().catch(() => {});
+      });
+    } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+      videoRef.current.src = watchUrl;
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [isHlsStream, watchUrl, reloadKey]);
 
   // Server selection
   const handleSelectServer = (p: Provider) => {
@@ -339,14 +430,38 @@ const Watch: React.FC = () => {
       {/* ============================================================== */}
       <div className="absolute inset-0 w-full h-full bg-black z-0">
         {provider && watchUrl ? (
-          <iframe
-            key={`${provider.id}-${type}-${id}-${selectedSeason}-${selectedEpisode}-${reloadKey}`}
-            src={watchUrl}
-            className="w-full h-full border-0 absolute inset-0"
-            allowFullScreen
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            title={title}
-          />
+          isHlsStream ? (
+            <div className="w-full h-full flex items-center justify-center bg-black">
+              <video
+                ref={videoRef}
+                key={`hls-${watchUrl}-${reloadKey}`}
+                className="w-full h-full object-contain"
+                controls
+                playsInline
+                autoPlay
+                crossOrigin="anonymous"
+              >
+                {activeTrackBlobUrl && activeSubtitle && (
+                  <track
+                    kind="subtitles"
+                    src={activeTrackBlobUrl}
+                    srcLang={activeSubtitle.language}
+                    label={activeSubtitle.label}
+                    default
+                  />
+                )}
+              </video>
+            </div>
+          ) : (
+            <iframe
+              key={`${provider.id}-${type}-${id}-${selectedSeason}-${selectedEpisode}-${reloadKey}`}
+              src={watchUrl}
+              className="w-full h-full border-0 absolute inset-0"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              title={title}
+            />
+          )
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center text-center p-6 bg-zinc-950">
             <Server size={32} className="text-[#95FF50] mb-3" />
@@ -458,6 +573,26 @@ const Watch: React.FC = () => {
           >
             <Users size={16} className={isPartyConnected ? 'text-black' : 'text-[#95FF50]'} />
             <span className="hidden sm:inline">Watch Party</span>
+          </button>
+
+          {/* Raccourci Sous-titres (CC) */}
+          <button
+            onClick={() => {
+              setSettingsView('subtitles');
+              setSettingsOpen(true);
+            }}
+            className={`flex items-center gap-1.5 h-10 px-3 rounded-full backdrop-blur-xl border border-white/15 shadow-2xl transition text-xs font-semibold ${
+              activeSubtitle
+                ? 'bg-[#95FF50]/20 border-[#95FF50]/50 text-[#95FF50]'
+                : 'bg-black/75 hover:bg-black/95 text-white/90 hover:text-white'
+            }`}
+            title="Gérer les sous-titres (Français, VOST...)"
+          >
+            <Subtitles size={16} className={activeSubtitle ? 'text-[#95FF50]' : 'text-white/80'} />
+            <span className="hidden sm:inline">
+              {activeSubtitle ? activeSubtitle.label : 'CC'}
+              {subtitlesList.length > 0 ? ` (${subtitlesList.length})` : ''}
+            </span>
           </button>
 
           {/* Bouton Cast direct */}
@@ -664,7 +799,7 @@ const Watch: React.FC = () => {
             </div>
           )}
 
-          {/* VUE : SOUS-TITRES & INFORMATIONS (Clair & Précis) */}
+          {/* VUE : SOUS-TITRES & GESTION EN DIRECT */}
           {settingsView === 'subtitles' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -673,26 +808,129 @@ const Watch: React.FC = () => {
                   className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white font-medium"
                 >
                   <ArrowLeft size={16} />
-                  <span>Sous-titres</span>
+                  <span>Sous-titres ({subtitlesList.length})</span>
                 </button>
                 <button onClick={() => setSettingsOpen(false)} className="text-white/60 hover:text-white">
                   <X size={16} />
                 </button>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
-                <p className="text-xs font-semibold text-white">Comment activer les sous-titres ?</p>
-                <p className="text-[11px] text-white/60 leading-relaxed">
-                  Chaque serveur intègre ses propres sous-titres multilingues HD. Cliquez directement sur l'icône <strong>[CC]</strong> en bas à droite de la vidéo pour choisir entre <strong>Français (VF)</strong>, <strong>Anglais</strong>, ou d'autres langues.
-                </p>
+              {/* Sous-titre actuellement actif */}
+              {activeSubtitle ? (
+                <div className="p-3 rounded-2xl bg-[#95FF50]/10 border border-[#95FF50]/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{activeSubtitle.flag}</span>
+                    <div>
+                      <p className="text-xs font-bold text-[#95FF50]">Actif : {activeSubtitle.label}</p>
+                      <p className="text-[10px] text-white/60">Piste synchronisée</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setActiveSubtitle(null);
+                      setActiveTrackBlobUrl(null);
+                      toast.info('Sous-titre désactivé');
+                    }}
+                    className="h-7 px-2.5 rounded-lg border-white/20 text-white hover:bg-white/10 text-[11px]"
+                  >
+                    Désactiver
+                  </Button>
+                </div>
+              ) : (
+                <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10">
+                  <p className="text-xs font-semibold text-white">Sous-titres automatiques</p>
+                  <p className="text-[11px] text-white/60 mt-0.5">
+                    Sélectionne une piste ci-dessous pour l'activer sur le lecteur ou télécharge le fichier .srt.
+                  </p>
+                </div>
+              )}
+
+              {/* Barre de recherche de langue */}
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+                <Input
+                  placeholder="Filtrer par langue (ex: Français, English)..."
+                  value={subtitleSearch}
+                  onChange={(e) => setSubtitleSearch(e.target.value)}
+                  className="h-8 pl-8 text-xs bg-white/[0.05] border-white/10 text-white placeholder:text-white/40 rounded-xl"
+                />
               </div>
 
-              <div className="space-y-3 pt-1">
+              {/* Liste des sous-titres récupérés */}
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                {subtitlesLoading ? (
+                  <div className="py-8 text-center text-xs text-white/50 flex flex-col items-center gap-2">
+                    <RefreshCw size={18} className="animate-spin text-[#95FF50]" />
+                    <span>Récupération des pistes de sous-titres...</span>
+                  </div>
+                ) : (
+                  (() => {
+                    const filtered = subtitlesList.filter(
+                      (s) =>
+                        s.label.toLowerCase().includes(subtitleSearch.toLowerCase()) ||
+                        s.language.toLowerCase().includes(subtitleSearch.toLowerCase())
+                    );
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="py-6 text-center text-xs text-white/40">
+                          Aucun sous-titre trouvé pour cette recherche.
+                        </div>
+                      );
+                    }
+
+                    return filtered.map((sub) => {
+                      const isActive = activeSubtitle?.id === sub.id;
+                      return (
+                        <div
+                          key={sub.id}
+                          className={`flex items-center justify-between p-2 rounded-xl border transition ${
+                            isActive
+                              ? 'bg-[#95FF50]/15 border-[#95FF50]/40 text-white'
+                              : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/5 text-white/90'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate pr-2">
+                            <span className="text-sm">{sub.flag}</span>
+                            <span className="text-xs font-medium truncate">{sub.label}</span>
+                            <span className="text-[10px] text-white/40 uppercase font-mono">[{sub.language}]</span>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => handleSelectSubtitle(sub)}
+                              className={`h-7 px-2.5 rounded-lg text-[11px] font-semibold transition ${
+                                isActive
+                                  ? 'bg-[#95FF50] text-black'
+                                  : 'bg-white/10 hover:bg-white/20 text-white'
+                              }`}
+                            >
+                              {isActive ? 'Actif' : 'Activer'}
+                            </button>
+                            <button
+                              onClick={() => handleDownloadSubtitle(sub)}
+                              className="h-7 w-7 rounded-lg bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/70 hover:text-white transition"
+                              title="Télécharger le fichier (.srt)"
+                            >
+                              <Download size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()
+                )}
+              </div>
+
+              {/* Paramètres de style des sous-titres */}
+              <div className="space-y-3 pt-2 border-t border-white/10">
                 {/* Switch Native */}
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold">Sous-titres natifs</p>
-                    <p className="text-[10px] text-white/50">Moteur intégré de l'appareil</p>
+                    <p className="text-[10px] text-white/50">Moteur intégré au navigateur</p>
                   </div>
                   <Switch checked={nativeSubtitles} onCheckedChange={setNativeSubtitles} />
                 </div>

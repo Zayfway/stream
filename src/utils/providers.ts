@@ -39,6 +39,14 @@ export const DEFAULT_SOURCES: Provider[] = [
     warning: 'Lecteur fluide et rapide (recommandé)',
   },
   {
+    id: 'cinejoy_nebula',
+    name: 'Cinejoy Nebula ⚡ (HLS Direct)',
+    movieUrl: 'https://nebula.bright67.online/hls/e1edf1f8-ffab-4c23-acbb-33f2683a844f/master.m3u8',
+    tvUrl: 'https://nebula.bright67.online/hls/e1edf1f8-ffab-4c23-acbb-33f2683a844f/master.m3u8',
+    warning: 'Flux HLS direct Cinejoy avec sous-titres',
+    isHLSPlayer: true,
+  },
+  {
     id: 'vidsrc',
     name: 'Vidsrc.su ⭐',
     movieUrl: 'https://vidsrc.su/movie/{tmdb_id}',
