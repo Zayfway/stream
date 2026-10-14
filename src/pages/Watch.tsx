@@ -197,6 +197,7 @@ const Watch: React.FC = () => {
         if (isMounted) {
           if (res && res.sourceUrl) {
             setDirectStream(res);
+            setUseDirectStream(true);
           }
           setIsResolvingDirect(false);
         }
