@@ -12,13 +12,12 @@ const PageBackdrop: React.FC<{ url: string | null }> = ({ url }) => {
   return (
     <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
       <div
-        className="absolute inset-0 transition-[background-image] duration-700"
+        className="absolute inset-0 kenburns transition-[background-image] duration-700"
         style={{
           backgroundImage: `url(${url})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
           filter: 'blur(64px) saturate(1.3)',
-          transform: 'scale(1.3)',
           opacity: 0.55,
         }}
       />

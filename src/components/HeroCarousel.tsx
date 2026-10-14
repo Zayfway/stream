@@ -84,7 +84,7 @@ const HeroCarousel: React.FC<{ onBackdrop?: (url: string | null) => void }> = ({
 
   if (!slides.length) {
     return (
-      <div className="w-full h-[85vh] min-h-[520px] bg-card animate-pulse flex items-center justify-center">
+      <div className="w-full h-[78vh] sm:h-[85vh] min-h-[520px] bg-card animate-pulse flex items-center justify-center">
         <div className="h-12 w-12 rounded-full border-4 border-white/70 border-t-transparent animate-spin" />
       </div>
     );
@@ -100,7 +100,7 @@ const HeroCarousel: React.FC<{ onBackdrop?: (url: string | null) => void }> = ({
 
   return (
     <div
-      className="relative w-full h-[85vh] min-h-[520px] overflow-hidden"
+      className="relative w-full h-[78vh] sm:h-[85vh] min-h-[520px] overflow-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -139,7 +139,7 @@ const HeroCarousel: React.FC<{ onBackdrop?: (url: string | null) => void }> = ({
 
       {/* Content */}
       <div className="relative z-10 flex h-full items-end">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pb-16 sm:pb-20 text-left">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pb-[4.5rem] sm:pb-20 text-left">
           <div key={current.id} className="max-w-2xl animate-slide-up">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white text-shadow-lg">
               {title}
@@ -191,7 +191,7 @@ const HeroCarousel: React.FC<{ onBackdrop?: (url: string | null) => void }> = ({
       </div>
 
       {/* Segmented progress indicator */}
-      <div className="absolute bottom-16 sm:bottom-20 right-4 sm:right-10 z-10 flex items-center gap-2">
+      <div className="absolute bottom-6 left-4 sm:left-auto sm:bottom-20 sm:right-10 z-10 flex items-center gap-2">
         {slides.map((m, i) => (
           <button
             key={m.id}

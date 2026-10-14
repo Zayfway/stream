@@ -11,5 +11,5 @@ if (splash) {
   window.setTimeout(() => {
     splash.classList.add('hide');
     window.setTimeout(() => splash.remove(), 600);
-  }, 450);
+  }, 1500);
 }
